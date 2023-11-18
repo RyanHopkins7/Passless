@@ -1,5 +1,5 @@
 import { Factor } from "fido2-lib";
-import { f2l } from "../f2l";
+import { f2l, origin } from "../f2l";
 
 export async function GET() {
     // Send challenge & registration options to client
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     const clientAttestationResponse = await req.json();
     const attestationExpectations = {
         challenge: '', // TODO: get challenge from session
-        origin: 'http://localhost:3000',
+        origin: origin,
         factor: 'first' as Factor
     };
     const regResult = await f2l.attestationResult(clientAttestationResponse, attestationExpectations);
