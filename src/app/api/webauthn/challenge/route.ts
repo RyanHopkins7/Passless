@@ -7,7 +7,7 @@ export async function GET() {
     // TODO: save challenge to session
 
     return Response.json({
-        challenge: Buffer.from(authnOptions.challenge).toString('base64url'),
+        challenge: Buffer.from(authnOptions.challenge).toString('base64'),
         timeout: authnOptions.timeout,
         rpId: authnOptions.rpId,
         userVerification: authnOptions.userVerification

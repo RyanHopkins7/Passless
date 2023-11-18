@@ -7,8 +7,12 @@ export async function GET() {
     // TODO: save challenge to session
     return Response.json({
         rp: regOpts.rp,
-        user: regOpts.user, // TODO: add user ID from database
-        challenge: Buffer.from(regOpts.challenge).toString('base64url'),
+        user: {
+            displayName: 'user', // TODO
+            id: 'MTIzNA==', // TODO: add user ID from database
+            name: 'User' // TODO
+        }, 
+        challenge: Buffer.from(regOpts.challenge).toString('base64'),
         pubKeyCredParams: regOpts.pubKeyCredParams,
         timeout: regOpts.timeout,
         attestation: regOpts.attestation,
