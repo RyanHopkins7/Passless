@@ -1,15 +1,14 @@
 'use client';
 
 import { FormEvent, useState } from "react";
-import * as base64buffer from "base64-arraybuffer";
 
 export default function Home() {
 	const [username, setUsername] = useState('');
 	const [email, setEmail] = useState('');
 
-	const registerUser = (e: FormEvent) => {
+	const registerUser = async (e: FormEvent) => {
 		e.preventDefault();
-		fetch('/api/users', {
+		await fetch('/api/users', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
@@ -18,7 +17,8 @@ export default function Home() {
 				'username': username,
 				'email': email
 			})
-		})
+		});
+		window.location.replace('/devices');
 	};
 
 	return (
