@@ -20,5 +20,8 @@ export async function POST(req: NextRequest) {
     };
     const authnResult = await f2l.assertionResult(clientAssertionResponse, assertionExpectations);
 
-    return Response.json({'authentication': 'successful'});
+    return Response.json({
+        'authentication': 'successful',
+        'symmKey': '' // TODO
+    });
 }

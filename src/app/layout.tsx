@@ -1,9 +1,10 @@
-import type { Metadata } from 'next'
-import './globals.css'
+import type { Metadata } from 'next';
+import Image from 'next/image';
+import './globals.css';
 
 export const metadata: Metadata = {
-	title: 'PassLess',
-	description: 'The Password-Less Password Manager',
+	title: 'Passless',
+	description: 'The Password-less Password Manager',
 }
 
 export default function RootLayout({
@@ -13,7 +14,12 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="en">
-			<body>{children}</body>
+			<body>
+				<div>
+					<Image src='/logo.svg' width={198} height={88} alt='Passless'></Image>
+				</div>
+				{children}
+			</body>
 		</html>
 	)
 }

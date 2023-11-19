@@ -1,11 +1,25 @@
 'use client';
 
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import * as base64buffer from "base64-arraybuffer";
 
 export default function Home() {
 	const [username, setUsername] = useState('');
 	const [email, setEmail] = useState('');
+
+	const registerUser = (e: FormEvent) => {
+		e.preventDefault();
+		fetch('/api/users', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				'username': username,
+				'email': email
+			})
+		})
+	};
 
 	const registerCred = async () => {
 		const r = await fetch('/api/webauthn/credential/reg-opts', { method: 'POST' });
@@ -47,36 +61,21 @@ export default function Home() {
 	};
 
 	return (
-		<main>
-			<div>
-				<form onSubmit={(e) => {
-					e.preventDefault();
-					fetch('/api/users', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify({
-							'username': username,
-							'email': email
-						})
-					})
-				}}>
-					<label htmlFor="name">Username:</label>
-					<input required type="text" name="name" onChange={
+		<main className="flex justify-center">
+			<div className="max-w-md my-10">
+				<h2 className="text-3xl font-bold mb-10">One step towards a future without passwords.</h2>
+				<form onSubmit={registerUser}>
+					<input required type="text" name="name" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Full Name" onChange={
 						(e) => setUsername(e.target.value)
 					}></input>
 
-					<label htmlFor="email">Email:</label>
-					<input required type="text" name="email" onChange={
+					<input required type="text" name="email" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Email Address" onChange={
 						(e) => setEmail(e.target.value)
 					}></input>
 
-					<input type="submit"></input>
+					<input type="submit" className="block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer" value="Create an Account"></input>
 				</form>
-			</div>
-			<div>
-				<button onClick={registerCred}>Register credential</button>
+				<a className="cursor-pointer hover:underline">Sign in to an existing account</a>
 			</div>
 		</main>
 	)
