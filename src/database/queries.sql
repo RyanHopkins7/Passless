@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users(
     recovery_email VARCHAR(255),
     user_name VARCHAR(255),
     hashed_passphrase LONGTEXT,
-    master_session INT NOT NULL
+    master_session VARCHAR(255)
 );
 
 -- Contains all passwords into single VARCHAR of the encrypted json data --
@@ -21,9 +21,6 @@ CREATE TABLE IF NOT EXISTS passwords(
 CREATE TABLE IF NOT EXISTS sessions(
     session_id VARCHAR(255) NOT NULL PRIMARY KEY,
     challenge VARCHAR(255),
-    expiration TIMESTAMP,
+    expiration BIGINT(20),
     user_id INT NOT NULL REFERENCES users(user_id)
 );
-
-ALTER TABLE users 
-ADD FOREIGN KEY (master_session) REFERENCES sessions(session_id);
