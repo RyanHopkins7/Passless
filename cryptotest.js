@@ -9,7 +9,8 @@ app.use(express.urlencoded({extended: true}))
   
 app.use('/', express.static(path.join(__dirname, 
                     'public_static'))) 
-  
+
+
 app.get('/gen', (req, res) => {
     a = encryptions.generateSymKey().then(function(result){
         console.log(result);
@@ -42,6 +43,18 @@ app.get('/dec', (req, res) => {
         res.send("Decrypted password: " + r)
     });
 })
+
+app.get('/keys', (req, res) => {
+    a = encryptions.encryptSymKey("self", "self").then(function(result){
+        console.log(result);
+        encryptions.decryptSymKey(result.ciphertext).then(function(r){
+            console.log(r);
+            res.send("Decrypted key: " + r)
+        });
+    });
+})
+
+app.get('/g', () => {console.log(encryptions.checkGlobals())})
   
 app.listen(2222, () => console.log( 
     'Server started on http://localhost:2222')) 
