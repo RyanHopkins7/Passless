@@ -1,12 +1,17 @@
 'use client';
 
+import { useState } from "react";
+
 export default function Home() {
+	const [username, setUsername] = useState('');
+	const [email, setEmail] = useState('');
+
 	const registerCred = async () => {
 		const r = await fetch('/api/webauthn/credential');
 		const regOpts = await r.json();
 
 		console.log(regOpts);
-		
+
 		const credential = await navigator.credentials.create({
 			publicKey: {
 				rp: regOpts.rp,
@@ -28,7 +33,36 @@ export default function Home() {
 
 	return (
 		<main>
-			<button onClick={registerCred}>Register credential</button>
+			<div>
+				<form onSubmit={(e) => {
+					e.preventDefault();
+					fetch('/api/users', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							'username': username,
+							'email': email
+						})
+					})
+				}}>
+					<label htmlFor="name">Username:</label>
+					<input required type="text" name="name" onChange={
+						(e) => setUsername(e.target.value)
+					}></input>
+
+					<label htmlFor="email">Email:</label>
+					<input required type="text" name="email" onChange={
+						(e) => setEmail(e.target.value)
+					}></input>
+
+					<input type="submit"></input>
+				</form>
+			</div>
+			<div>
+				<button onClick={registerCred}>Register credential</button>
+			</div>
 		</main>
 	)
 }
