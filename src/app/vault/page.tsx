@@ -9,20 +9,7 @@ export default function Vault() {
     const [selectedUrl, setSelectedUrl] = useState('');
     const [selectedPassword, setSelectedPassword] = useState('');
     const [selectedEntry, setSelectedEntry] = useState(-1);
-    const [data, setData] = useState([
-        {
-            name: 'University of Michigan',
-            email: 'ryanhopk@umich.edu',
-            url: 'umich.edu',
-            password: 'password123'
-        },
-        {
-            name: 'Netflix',
-            email: 'ryanhopk@umich.edu',
-            url: 'netflix.com',
-            password: 'badpassword4321'
-        }
-    ]);
+    const [data, setData] = useState([]);
 
     const genSealKeys = async () => {
         const aesKey = await window.crypto.subtle.generateKey({
