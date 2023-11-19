@@ -1,7 +1,7 @@
 'use client';
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Vault() {
     const [selectedName, setSelectedName] = useState('');
@@ -10,6 +10,57 @@ export default function Vault() {
     const [selectedPassword, setSelectedPassword] = useState('');
     const [selectedEntry, setSelectedEntry] = useState(-1);
     const [data, setData] = useState([]);
+
+    const genSealKeys = async () => {
+        const aesKey = await window.crypto.subtle.generateKey({
+            name: 'AES-CBC',
+            length: 256
+        }, true, ['encrypt', 'decrypt']);
+
+        const hmacKey = await window.crypto.subtle.generateKey({
+            name: 'HMAC',
+            hash: { name: 'SHA-256' }
+        }, true, ['sign', 'verify']);   
+
+        return { aesKey: aesKey, hmacKey: hmacKey }
+    }
+
+    const seal = async (pt: string, aesKey: CryptoKey, hmacKey: CryptoKey) => {
+        const ct = await window.crypto.subtle.encrypt({
+            name: 'AES-CBC',
+            iv: window.crypto.getRandomValues(new Uint8Array(16))
+        }, aesKey, Buffer.from(pt));
+        const mac = await window.crypto.subtle.sign({
+            name: 'HMAC',
+            hash: 'SHA-256'
+        }, hmacKey, ct);
+
+        return {
+            ct: Buffer.from(ct).toString('base64'), 
+            mac: Buffer.from(mac).toString('base64')
+        };
+    }
+
+    useEffect(() => {
+        genSealKeys()
+            .then(({ aesKey, hmacKey }) => {
+                seal(JSON.stringify(data), aesKey, hmacKey)
+                    .then((seal) => {
+                        fetch('/api/passwords', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                // B64 encode again to make sure server enterprets as a string
+                                data: Buffer.from(
+                                    JSON.stringify(seal)
+                                ).toString('base64')
+                            })
+                        });
+                    });
+            });
+    }, [data]);
 
     return (
         <main className="flex justify-center">
