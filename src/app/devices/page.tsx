@@ -2,8 +2,12 @@
 
 import * as base64buffer from "base64-arraybuffer";
 import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
 
 export default function Devices() {
+    const [deviceName, setDeviceName] = useState('');
+
     const registerCred = async () => {
         const r = await fetch('/api/webauthn/credential/reg-opts', { method: 'POST' });
         const regOpts = await r.json();
@@ -30,7 +34,7 @@ export default function Devices() {
         const credResponse = cred.response as AuthenticatorAttestationResponse;
         const credId = base64buffer.encode(cred.rawId);
 
-        fetch('/api/webauthn/credential', {
+        await fetch('/api/webauthn/credential', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -44,21 +48,35 @@ export default function Devices() {
                 id: credId
             })
         });
+
+        setDeviceName('iPhone 13');
     };
 
     return (
         <main className="flex justify-center">
             <div>
                 <h2 className="text-3xl font-bold mb-10">My Devices</h2>
-                <div className="w-80 h-80 bg-light-purple m-3 grid place-items-center cursor-pointer" onClick={registerCred}>
-                    <Image
-                        src="/menu.svg"
-                        width={50}
-                        height={50}
-                        alt="Add a device"
-                    />
+                <div className="w-80 h-80 button dark-purple-dashed-border m-3 grid place-items-center cursor-pointer" onClick={registerCred}>
+                    {(deviceName == '') ?
+                        <div>
+                            <Image
+                                src="/menu.svg"
+                                width={50}
+                                height={50}
+                                alt="Add a device"
+                                className="m-auto"
+                            />
+                            <p className="dark-purple">Add a new device</p>
+                        </div> :
+                        <div>
+                            <p className="dark-purple">{deviceName}</p>
+                        </div>
+                    }
+
                 </div>
-                <input type="submit" className="block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer" value="Done"></input>
+                <Link href="/vault">
+                    <button className="block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer">Done</button>
+                </Link>
             </div>
         </main>
     )
