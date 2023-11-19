@@ -16,7 +16,7 @@ export default function RootLayout({
 		<html lang="en">
 			<body>
 				<div>
-					<Image src='/logo.svg' width={198} height={88} alt='Passless'></Image>
+					<Image src='/updatedLogo.jpg' width={198} height={88} alt='Passless'></Image>
 				</div>
 				{children}
 			</body>
