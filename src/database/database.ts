@@ -25,7 +25,6 @@ type getUserDataType = {
     username: string
 }
 
-
 async function createUser (username : string, email : string, recoveryEmail : string, symmKey :  string) : Promise<void> {
     let query : string = `
         INSERT INTO users (email, recovery_email, user_name, symm_key)
@@ -147,13 +146,13 @@ async function setPubKey(userId : number, pubKey : string) : Promise<void> {
     await connection.query(query, [pubKey, userId]);
 }
 
-async function setPassword(email : string, password : string) {
+async function setPasswords(email : string, password : string) : Promise<void> {
     
-    let userId = await getUserId(email);
+    let userId : number = await getUserId(email);
 
     // Check if string exists
     let query : string = `
-        SELECT *
+        SELECT json
         FROM passwords
         WHERE user_id = ?
         LIMIT 1
@@ -163,14 +162,42 @@ async function setPassword(email : string, password : string) {
     if(passwords.length == 0) {
         // Insert a new initial password
         query = `
-            INSERT INTO passwords ()
-        `
+            INSERT INTO passwords (json, user_id)
+            VALUES (?, ?)
+        `;
+
+        await connection.query(query, [password, userId]);
     }
     else {
         // Update existing set of passwords
+        query = `
+            UPDATE passwords
+            SET json = ?
+            WHERE user_id = ?
+        `;
+
+        await connection.query(query, [password, userId]);
     }
 
 }
 
+async function getPasswords(email : string) : Promise<void> {
+
+    let userId : number = await getUserId(email);
+
+    let query : string = `
+        SELECT json
+        FROM passwords
+        WHERE user_id = ?
+        LIMIT 1
+    `;
+
+    const [passwords] = await connection.query(query, [userId]);
+
+    if(passwords.length != 0) {
+        return passwords[0];
+    }
+}
+
 module.exports = {createUser, updateSession, createSession, getSession, getUserId, 
-                    getUserData, validateUniqueEmail, getPubKey, setPubKey}
+                    getUserData, validateUniqueEmail, getPubKey, setPubKey, setPasswords, getPasswords}
