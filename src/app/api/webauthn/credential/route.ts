@@ -2,7 +2,7 @@ import { Factor } from "fido2-lib";
 import { f2l, origin } from "../f2l";
 import * as base64buffer from "base64-arraybuffer";
 import { NextRequest } from "next/server";
-import { getSession } from "@/database/database";
+import { getSession, setPubKey } from "@/database/database";
 import { cookies } from "next/headers";
 
 export async function POST(req: NextRequest) {
@@ -30,7 +30,9 @@ export async function POST(req: NextRequest) {
 
     // Save publicKey and counter from regResult to user's info for future authentication calls
     const pubKey = regResult.authnrData.get('credentialPublicKeyPem');
-    console.log(pubKey);
+    await setPubKey(session.user_id, pubKey);
+
+    // Generate symmetric key
 
     return Response.json({'registration': 'success'});
 }

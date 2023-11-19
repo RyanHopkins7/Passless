@@ -26,13 +26,12 @@ type getUserDataType = {
 }
 
 
-async function createUser (username : string, email : string, recoveryEmail : string) : Promise<void> {
+async function createUser (username : string, email : string, recoveryEmail : string, symmKey :  string) : Promise<void> {
     let query : string = `
-        INSERT INTO users (email, recovery_email, user_name, hashed_passphrase)
-        VALUES (?, ?, ?)
+        INSERT INTO users (email, recovery_email, user_name, symm_key)
+        VALUES (?, ?, ?, ?)
     `;
-    await connection.query(query, [email, recoveryEmail, username]);
-
+    await connection.query(query, [email, recoveryEmail, username, symmKey]);
 }
 
 async function updateSession (sessionId : string, challenge : string) : Promise<void> {
@@ -148,6 +147,30 @@ async function setPubKey(userId : number, pubKey : string) : Promise<void> {
     await connection.query(query, [pubKey, userId]);
 }
 
+async function setPassword(email : string, password : string) {
+    
+    let userId = await getUserId(email);
+
+    // Check if string exists
+    let query : string = `
+        SELECT *
+        FROM passwords
+        WHERE user_id = ?
+        LIMIT 1
+    `
+    const [passwords] = await connection.query(query, [userId]);
+
+    if(passwords.length == 0) {
+        // Insert a new initial password
+        query = `
+            INSERT INTO passwords ()
+        `
+    }
+    else {
+        // Update existing set of passwords
+    }
+
+}
 
 module.exports = {createUser, updateSession, createSession, getSession, getUserId, 
                     getUserData, validateUniqueEmail, getPubKey, setPubKey}

@@ -1,15 +1,16 @@
 'use client';
 
+import { FormEvent, useState } from "react";
 import * as base64buffer from "base64-arraybuffer";
-import Image from "next/image";
 
-export default function Devices() {
-    const registerCred = async () => {
+export default function Authenticate() {
+	const [email, setEmail] = useState('');
+
+    const authenticateUser = async (e: FormEvent) => {
+        e.preventDefault();
+
         const r = await fetch('/api/webauthn/credential/reg-opts', { method: 'POST' });
         const regOpts = await r.json();
-
-        console.log(regOpts);
-        console.log(Buffer.from(regOpts.user.id, 'base64').buffer);
 
         const cred = await navigator.credentials.create({
             publicKey: {
@@ -44,22 +45,24 @@ export default function Devices() {
                 id: credId
             })
         });
-    };
 
-    return (
-        <main className="flex justify-center">
-            <div>
-                <h2 className="text-3xl font-bold mb-10">My Devices</h2>
-                <div className="w-80 h-80 bg-light-purple m-3 grid place-items-center cursor-pointer" onClick={registerCred}>
-                    <Image
-                        src="/menu.svg"
-                        width={50}
-                        height={50}
-                        alt="Add a device"
-                    />
-                </div>
-                <input type="submit" className="block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer" value="Done"></input>
-            </div>
-        </main>
-    )
+        window.location.replace('/vault');
+    }
+
+	return (
+		<main className="flex justify-center">
+			<div className="max-w-md my-10">
+				<h2 className="text-3xl font-bold mb-10">One Step Towards a Future Without Passwords.</h2>
+				<form onSubmit={authenticateUser}>
+
+					<input required type="text" name="email" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Email Address" onChange={
+						(e) => setEmail(e.target.value)
+					}></input>
+
+					<input type="submit" className="block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer" value="Login Here"></input>
+				</form>
+				<a onClick={authenticateUser} className="cursor-pointer hover:underline">Create an Account</a>
+			</div>
+		</main>
+	)
 }

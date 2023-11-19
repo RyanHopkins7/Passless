@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { f2l } from "../../f2l";
 import { createSession, updateSession } from "@/database/database";
+import { cookies } from "next/headers";
 
 export async function POST(req: NextRequest) {
     // Generate & send challenge
@@ -8,7 +9,7 @@ export async function POST(req: NextRequest) {
     const challenge = Buffer.from(authnOptions.challenge).toString('base64');
     
     // Save challenge in session
-    const sid = await req.cookies.get('sid')?.value || '';
+    const sid = cookies().get('sid')?.value || '';
     await updateSession(sid, challenge);
 
     return Response.json({

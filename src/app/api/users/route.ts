@@ -12,7 +12,7 @@ export async function POST(req: Request) {
         return NextResponse.error();
     }
 
-    await createUser(data.username, data.email, data.email);
+    await createUser(data.username, data.email, data.email, data.symmKey);
     const sid = await createSession('', data.email);
 
     const res = NextResponse.json({'userCreation': 'successful'});

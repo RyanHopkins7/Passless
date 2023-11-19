@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users(
     recovery_email VARCHAR(255),
     user_name VARCHAR(255),
     public_key LONGTEXT,
+    symm_key LONGTEXT,
     master_session VARCHAR(255)
 );
 
