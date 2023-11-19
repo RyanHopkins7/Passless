@@ -10,10 +10,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+<<<<<<< HEAD
     "dotenv": "^16.3.1",
     "knex": "^3.0.1",
     "mysql": "^2.18.1",
     "mysql2": "^3.6.3",
+=======
+    "base64-arraybuffer": "^1.0.2",
+    "fido2-lib": "^3.4.1",
+>>>>>>> 7cd8e6575c5519ed42500d6040763a835dfc005b
     "next": "14.0.3",
     "react": "^18",
     "react-dom": "^18"
