@@ -10,7 +10,6 @@ app.use(express.urlencoded({extended: true}))
 app.use('/', express.static(path.join(__dirname, 
                     'public_static'))) 
 
-
 app.get('/gen', (req, res) => {
     a = encryptions.generateSymKey().then(function(result){
         console.log(result);
