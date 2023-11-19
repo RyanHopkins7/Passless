@@ -1,24 +1,17 @@
 import { Factor } from "fido2-lib";
 import { f2l, origin } from "../f2l";
+import { NextRequest } from "next/server";
+import { getSession } from "@/database/database";
 
-export async function GET() {
-    // Generate & send challenge
-    const authnOptions = await f2l.assertionOptions();
-    // TODO: save challenge to session
-
-    return Response.json({
-        challenge: Buffer.from(authnOptions.challenge).toString('base64'),
-        timeout: authnOptions.timeout,
-        rpId: authnOptions.rpId,
-        userVerification: authnOptions.userVerification
-    });
-}
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     // Validate signed challenge
     const clientAssertionResponse = await req.json();
+
+    const sid = req.cookies.get('sid')?.value || '';
+    const session = await getSession(sid);
+
     const assertionExpectations = {
-        challenge: '', // TODO: get challenge from session
+        challenge: session.challenge,
         origin: origin,
         factor: 'first' as Factor,
         publicKey: '', // TODO: get public key from DB

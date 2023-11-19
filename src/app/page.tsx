@@ -8,7 +8,7 @@ export default function Home() {
 	const [email, setEmail] = useState('');
 
 	const registerCred = async () => {
-		const r = await fetch('/api/webauthn/credential');
+		const r = await fetch('/api/webauthn/credential/reg-opts', { method: 'POST' });
 		const regOpts = await r.json();
 
 		const cred = await navigator.credentials.create({

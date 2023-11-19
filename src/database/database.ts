@@ -33,11 +33,16 @@ export async function updateSession (sessionId : string, challenge : string) : P
 }
 
 export async function createSession () : Promise<string> {
-
     // returns session id
+    return 'test';
 }
 
 export async function getSession(sessionId : string) : Promise<getSessionReturnType> {
-
     // returns all session data as json object
+    return {
+        userId: 1,
+        sessionId: 'test',
+        challenge: 'abc',
+        expiration: 0
+    };
 }

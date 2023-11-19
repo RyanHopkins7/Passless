@@ -1,27 +1,10 @@
 import { Factor } from "fido2-lib";
 import { f2l, origin } from "../f2l";
 import * as base64buffer from "base64-arraybuffer";
+import { NextRequest } from "next/server";
+import { getSession } from "@/database/database";
 
-export async function GET() {
-    // Send challenge & registration options to client
-    const regOpts = await f2l.attestationOptions();
-    // TODO: save challenge to session
-    return Response.json({
-        rp: regOpts.rp,
-        user: {
-            displayName: 'user', // TODO
-            id: 'MTIzNA==', // TODO: add user ID from database
-            name: 'User' // TODO
-        }, 
-        challenge: Buffer.from(regOpts.challenge).toString('base64'),
-        pubKeyCredParams: regOpts.pubKeyCredParams,
-        timeout: regOpts.timeout,
-        attestation: regOpts.attestation,
-        authenticatorSelection: regOpts.authenticatorSelection
-    });
-}
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     // Register credential & save public key
     const data = await req.json();
     const clientAttestationResponse = {
@@ -31,17 +14,21 @@ export async function POST(req: Request) {
             attestationObject: data.res.attestationObject
         }
     };
-    console.log(clientAttestationResponse);
+
+    const sid = req.cookies.get('sid')?.value || '';
+    const session = await getSession(sid);
+
     const attestationExpectations = {
-        challenge: '', // TODO: get challenge from session
+        challenge: session.challenge, // TODO: get challenge from session
         origin: origin,
         factor: 'first' as Factor
     };
-    console.log(attestationExpectations);
     const regResult = await f2l.attestationResult(clientAttestationResponse, attestationExpectations);
     console.log(regResult);
-    // TODO: save publicKey and counter from regResult to user's info for future authentication calls
+
+    // Save publicKey and counter from regResult to user's info for future authentication calls
     const pubKey = regResult.authnrData.get('credentialPublicKeyPem');
+    console.log(pubKey)
 
     return Response.json({'registration': 'success'});
 }
