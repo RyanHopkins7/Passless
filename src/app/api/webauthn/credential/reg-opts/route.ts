@@ -1,14 +1,14 @@
-import { NextResponse } from "next/server";
-import { createSession, updateSession } from "@/database/database";
+import { NextRequest, NextResponse } from "next/server";
+import { updateSession } from "@/database/database";
 import { f2l } from "../../f2l";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
     // Send challenge & registration options to client
     const regOpts = await f2l.attestationOptions();
     const challenge = Buffer.from(regOpts.challenge).toString('base64');
 
     // Save challenge in session
-    const sid = await createSession();
+    const sid = req.cookies.get('sid')?.value || '';
     await updateSession(sid, challenge);
 
     const res = NextResponse.json({

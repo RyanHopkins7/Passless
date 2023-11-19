@@ -2,6 +2,7 @@
 var mysql = require("mysql2");
 var randomstring = require("randomstring");
 require('dotenv').config();
+var randomBytes = require("crypto");
 
 var connection = mysql.createConnection({
     host: process.env.DB_HOST,
@@ -17,6 +18,13 @@ type getSessionReturnType = {
     expiration: number,
     userId: number
 } 
+
+type getUserDataType = {
+    userId: number,
+    email: string,
+    username: string
+}
+
 
 async function createUser (username : string, email : string, recoveryEmail : string, 
                                 hashedPass : string) : Promise<void> {
@@ -39,10 +47,7 @@ async function updateSession (sessionId : string, challenge : string) : Promise<
 }
 
 async function createSession (challenge : string, email : string) : Promise<string> {
-    let sessionId : string = randomstring.generate({
-        charset: 'alphanumeric',
-        length: 60
-    });
+    let sessionId : string = randomBytes(32).toString('base64');
 
     let userId : number = await getUserId(email);
 
@@ -105,6 +110,20 @@ async function validateUniqueEmail(email : string) : Promise<boolean> {
         return false;
 
     return true;
+}
+
+
+async function getUserData(userId : number) : Promise<getUserDataType> {
+    let query : string = `
+        SELECT user_id, email, user_name
+        FROM users
+        WHERE user_id = ?
+        LIMIT 1
+    `;
+
+    const [userData] = await connection.query(query, [userId]);
+
+    return userData[0];
 }
 
 

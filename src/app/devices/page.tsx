@@ -45,7 +45,7 @@ export default function Devices() {
         <main className="flex justify-center">
             <div>
                 <h2 className="text-3xl font-bold mb-10">My Devices</h2>
-                <div className="w-80 h-80 bg-light-purple m-3 grid place-items-center cursor-pointer">
+                <div className="w-80 h-80 bg-light-purple m-3 grid place-items-center cursor-pointer" onClick={registerCred}>
                     <Image
                         src="/menu.svg"
                         width={50}
