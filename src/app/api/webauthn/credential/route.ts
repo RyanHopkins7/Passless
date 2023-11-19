@@ -1,5 +1,6 @@
 import { Factor } from "fido2-lib";
 import { f2l, origin } from "../f2l";
+import * as base64buffer from "base64-arraybuffer";
 
 export async function GET() {
     // Send challenge & registration options to client
@@ -22,7 +23,14 @@ export async function GET() {
 
 export async function POST(req: Request) {
     // Register credential & save public key
-    const clientAttestationResponse = await req.json();
+    const data = await req.json();
+    const clientAttestationResponse = {
+        id: base64buffer.decode(data.id),
+        response: {
+            clientDataJSON: data.res.clientDataJSON,
+            attestationObject: data.res.attestationObject
+        }
+    };
     const attestationExpectations = {
         challenge: '', // TODO: get challenge from session
         origin: origin,

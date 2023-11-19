@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from "react";
+import * as base64buffer from "base64-arraybuffer";
 
 export default function Home() {
 	const [username, setUsername] = useState('');
@@ -12,7 +13,7 @@ export default function Home() {
 
 		console.log(regOpts);
 
-		const credential = await navigator.credentials.create({
+		const cred = await navigator.credentials.create({
 			publicKey: {
 				rp: regOpts.rp,
 				user: {
@@ -26,9 +27,25 @@ export default function Home() {
 				timeout: regOpts.timeout,
 				authenticatorSelection: regOpts.authenticatorSelection
 			}
-		});
+		}) as PublicKeyCredential;
 
-		console.log(credential);
+		const credResponse = cred.response as AuthenticatorAttestationResponse;
+		const credId = base64buffer.encode(cred.rawId);
+
+		fetch('/api/webauthn/credential', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				name: 'iphone', // TODO
+				res: {
+					clientDataJSON: Buffer.from(credResponse.clientDataJSON).toString('base64'),
+					attestationObject: Buffer.from(credResponse.attestationObject).toString('base64')
+				},
+				id: credId
+			})
+		});
 	};
 
 	return (
