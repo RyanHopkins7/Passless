@@ -21,8 +21,25 @@ p, a, h1, h2, h3, h4, h5, h6 {
     background-color: #F2EFFA;
 }
 
+.light-purple-underline {
+    border-bottom: #F2EFFA 2px solid;
+}
+
 .bg-medium-purple {
     background-color: #CAC2F9;
+}
+
+.dark-purple-dashed-border {
+    border: 3px dashed #8680DF;
+}
+
+.button.dark-purple-dashed-border:hover {
+    border: none;
+    background-color: #F2EFFA;
+}
+
+.dark-purple {
+    color: #8680DF;
 }
 
 .button.bg-dark-purple {
