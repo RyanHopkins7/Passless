@@ -146,9 +146,7 @@ async function setPubKey(userId : number, pubKey : string) : Promise<void> {
     await connection.query(query, [pubKey, userId]);
 }
 
-async function setPasswords(email : string, password : string) : Promise<void> {
-    
-    let userId : number = await getUserId(email);
+async function setPasswords(userId : number, password : string) : Promise<void> {
 
     // Check if string exists
     let query : string = `
@@ -181,9 +179,7 @@ async function setPasswords(email : string, password : string) : Promise<void> {
 
 }
 
-async function getPasswords(email : string) : Promise<void> {
-
-    let userId : number = await getUserId(email);
+async function getPasswords(userId : number) : Promise<string> {
 
     let query : string = `
         SELECT json
@@ -197,6 +193,8 @@ async function getPasswords(email : string) : Promise<void> {
     if(passwords.length != 0) {
         return passwords[0];
     }
+
+    return "";
 }
 
 module.exports = {createUser, updateSession, createSession, getSession, getUserId, 

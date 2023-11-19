@@ -32,7 +32,5 @@ export async function POST(req: NextRequest) {
     const pubKey = regResult.authnrData.get('credentialPublicKeyPem');
     await setPubKey(session.user_id, pubKey);
 
-    // Generate symmetric key
-
     return Response.json({'registration': 'success'});
 }

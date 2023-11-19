@@ -1,19 +1,20 @@
 import { NextRequest } from "next/server";
-import { getSession } from "@/database/database";
+import { getSession, getUserId, getPasswords, setPasswords } from "@/database/database";
 
 export async function GET(req: NextRequest) {
     const sid = req.cookies.get('sid')?.value || '';
-    const session = getSession(sid);
+    const session = await getSession(sid);
 
-    // TODO: get password data from db using session.userId
-    return Response.json({'passwordData': '' /* TODO */});
+    const passwords : string = await getPasswords(session.userId);
+    return Response.json({'passwordData': passwords});
 }
 
 export async function POST(req: NextRequest) {
-    const data = req.json();
+    const data = await req.json();
     const sid = req.cookies.get('sid')?.value || '';
-    const session = getSession(sid);
+    const session = await getSession(sid);
 
-    // TODO: update passwords in db using session.userId
+    await setPasswords(session.userId, data.data);
+
     return Response.json({'update': 'successful'});
 }
