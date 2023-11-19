@@ -19,8 +19,9 @@ CREATE TABLE IF NOT EXISTS passwords(
 );
 
 CREATE TABLE IF NOT EXISTS sessions(
-    session_id INT NOT NULL PRIMARY KEY,
-    challenge VARBINARY(128),
+    session_id VARCHAR(255) NOT NULL PRIMARY KEY,
+    challenge VARCHAR(255),
+    expiration TIMESTAMP,
     user_id INT NOT NULL REFERENCES users(user_id)
 );
 

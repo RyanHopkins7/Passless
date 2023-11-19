@@ -25,28 +25,27 @@ CREATE TABLE IF NOT EXISTS users(
     email VARCHAR(255) NOT NULL,
     recovery_email VARCHAR(255),
     user_name VARCHAR(255),
-    hashed_passphrase VARCHAR(255),
+    hashed_passphrase LONGTEXT,
     master_session INT NOT NULL
 );
 
 -- Contains all passwords into single VARCHAR of the encrypted json data --
 -- User_id refers to the user the passwords belong to
 CREATE TABLE IF NOT EXISTS passwords(
-    json VARCHAR(MAX) NOT NULL,
-    user_id INT NOT NULL,
-    (user_id) REFERENCES users(user_id)
+    json LONGTEXT NOT NULL,
+    user_id INT NOT NULL REFERENCES users(user_id)
 );
 
 CREATE TABLE IF NOT EXISTS sessions(
     session_id INT NOT NULL PRIMARY KEY,
     challenge VARBINARY(128),
-    user_id INT NOT NULL,
-    (user_id) REFERNECES users(user_id)
+    user_id INT NOT NULL REFERENCES users(user_id)
 );
 
 ALTER TABLE users 
-ADD FOREIGN KEY IF NOT EXISTS (master_session) REFERENCES sessions(session_id);`;
+ADD FOREIGN KEY (master_session) REFERENCES sessions(session_id);`;
 
+// Run the default query upon opening the 
 connection.query(query, (err, results, fields) => {
     if(err) {
         throw err;

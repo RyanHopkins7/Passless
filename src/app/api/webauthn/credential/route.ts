@@ -31,12 +31,15 @@ export async function POST(req: Request) {
             attestationObject: data.res.attestationObject
         }
     };
+    console.log(clientAttestationResponse);
     const attestationExpectations = {
         challenge: '', // TODO: get challenge from session
         origin: origin,
         factor: 'first' as Factor
     };
+    console.log(attestationExpectations);
     const regResult = await f2l.attestationResult(clientAttestationResponse, attestationExpectations);
+    console.log(regResult);
     // TODO: save publicKey and counter from regResult to user's info for future authentication calls
 
     return Response.json({'registration': 'success'});
