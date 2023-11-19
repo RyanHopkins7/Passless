@@ -1,5 +1,8 @@
+'use server';
+
 import { createUser, createSession, validateUniqueEmail } from "@/database/database";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
     // Create a new user
@@ -9,11 +12,17 @@ export async function POST(req: Request) {
         return NextResponse.error();
     }
 
-    await createUser(data.username, data.email, data.email, '');
+    await createUser(data.username, data.email, data.email);
     const sid = await createSession('', data.email);
 
     const res = NextResponse.json({'userCreation': 'successful'});
-    res.cookies.set('sid', sid);
+    cookies().set({
+        name: 'sid', 
+        value: sid,
+        httpOnly: true,
+        path: '/',
+        sameSite: 'strict'
+    });
 
     return res;
 }

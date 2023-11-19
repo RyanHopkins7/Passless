@@ -1,3 +1,5 @@
+'use client';
+
 import * as base64buffer from "base64-arraybuffer";
 import Image from "next/image";
 
@@ -5,6 +7,9 @@ export default function Devices() {
     const registerCred = async () => {
         const r = await fetch('/api/webauthn/credential/reg-opts', { method: 'POST' });
         const regOpts = await r.json();
+
+        console.log(regOpts);
+        console.log(Buffer.from(regOpts.user.id, 'base64').buffer);
 
         const cred = await navigator.credentials.create({
             publicKey: {

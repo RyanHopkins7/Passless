@@ -2,7 +2,7 @@
 var mysql = require("mysql2");
 var randomstring = require("randomstring");
 require('dotenv').config();
-var randomBytes = require("crypto");
+var c = require("crypto");
 
 var connection = mysql.createConnection({
     host: process.env.DB_HOST,
@@ -26,13 +26,12 @@ type getUserDataType = {
 }
 
 
-async function createUser (username : string, email : string, recoveryEmail : string, 
-                                hashedPass : string) : Promise<void> {
+async function createUser (username : string, email : string, recoveryEmail : string) : Promise<void> {
     let query : string = `
         INSERT INTO users (email, recovery_email, user_name, hashed_passphrase)
-        VALUES (?, ?, ?, ?)
+        VALUES (?, ?, ?)
     `;
-    await connection.query(query, [email, recoveryEmail, username, hashedPass]);
+    await connection.query(query, [email, recoveryEmail, username]);
 
 }
 
@@ -47,7 +46,7 @@ async function updateSession (sessionId : string, challenge : string) : Promise<
 }
 
 async function createSession (challenge : string, email : string) : Promise<string> {
-    let sessionId : string = randomBytes(32).toString('base64');
+    let sessionId : string = c.randomBytes(32).toString('base64');
 
     let userId : number = await getUserId(email);
 
@@ -126,5 +125,29 @@ async function getUserData(userId : number) : Promise<getUserDataType> {
     return userData[0];
 }
 
+async function getPubKey(userId : number) : Promise<string> {
+    let query : string = `
+        SELECT public_key
+        FROM users
+        WHERE user_id = ?
+        LIMIT 1
+    `;
 
-module.exports = {createUser, updateSession, createSession, getSession, getUserId, validateUniqueEmail}
+    const [pubKey] = await connection.query(query, [userId]);
+
+    return pubKey[0];
+}
+
+async function setPubKey(userId : number, pubKey : string) : Promise<void> {
+    let query : string = `
+        UPDATE users
+        SET public_key = ?
+        WHERE user_id = ?
+    `;
+
+    await connection.query(query, [pubKey, userId]);
+}
+
+
+module.exports = {createUser, updateSession, createSession, getSession, getUserId, 
+                    getUserData, validateUniqueEmail, getPubKey, setPubKey}

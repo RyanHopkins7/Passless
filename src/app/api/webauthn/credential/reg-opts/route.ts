@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateSession } from "@/database/database";
+import { updateSession, getUserData, getSession } from "@/database/database";
+import { cookies } from "next/headers";
 import { f2l } from "../../f2l";
 
 export async function POST(req: NextRequest) {
@@ -8,15 +9,19 @@ export async function POST(req: NextRequest) {
     const challenge = Buffer.from(regOpts.challenge).toString('base64');
 
     // Save challenge in session
-    const sid = req.cookies.get('sid')?.value || '';
+    const sid = cookies().get('sid')?.value || '';
     await updateSession(sid, challenge);
+    const sessionData = await getSession(sid);
+    // console.log(sessionData);
+    const userData = await getUserData(sessionData.user_id);
+    // console.log(userData);
 
-    const res = NextResponse.json({
+    return NextResponse.json({
         rp: regOpts.rp,
         user: {
-            displayName: 'user', // TODO
-            id: 'MTIzNA==', // TODO: add user ID from database
-            name: 'User' // TODO
+            displayName: userData.user_name, 
+            id: Buffer.from(String(userData.user_id)).toString('base64'),
+            name: userData.email
         }, 
         challenge: challenge,
         pubKeyCredParams: regOpts.pubKeyCredParams,
@@ -24,7 +29,4 @@ export async function POST(req: NextRequest) {
         attestation: regOpts.attestation,
         authenticatorSelection: regOpts.authenticatorSelection
     });
-
-    res.cookies.set('sid', sid);
-    return res;
 }

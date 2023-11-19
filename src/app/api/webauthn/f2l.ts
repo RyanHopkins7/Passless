@@ -6,5 +6,6 @@ export const f2l = new Fido2Lib({
     rpId: 'localhost',
     rpName: 'PassLess',
     challengeSize: 128,
-    authenticatorUserVerification: 'required'
+    authenticatorUserVerification: 'required',
+    cryptoParams: [-257, -7]
 });

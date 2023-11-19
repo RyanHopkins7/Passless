@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users(
     email VARCHAR(255) NOT NULL,
     recovery_email VARCHAR(255),
     user_name VARCHAR(255),
-    hashed_passphrase LONGTEXT,
+    public_key LONGTEXT,
     master_session VARCHAR(255)
 );
 
