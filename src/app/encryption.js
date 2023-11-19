@@ -1,59 +1,14 @@
 const { subtle } = globalThis.crypto;
 const crypto = globalThis.crypto;
 
-let db;
-init();
-
-async function init(){
-  const request = indexedDB.open("keyDB", 1);
-  request.onupgradeneeded = function(){
-  const db = request.result;
-  const store = db.createObjectStore("keyStore", {keyPath: "id"});
-  // tx = db.transaction('keyStore', 'readwrite');
-    try {
-        const a = {
-            id: 1,
-            keys: null
-        };
-        const b = {
-            id: 1,
-            keys: null
-        };
-        const c = {
-            id: 1,
-            keys: null,
-        };
-        store.put(a);
-        store.put(b);
-        store.put(c);
-      } 
-    catch(err) {
-        throw err;
-      }
-  }
-  request.onsuccess = function(){
-    db = request.result
-  }
-  
+function updateKey(idx, jwk){
+  localStorage.setItem(idx, JSON.stringify(jwk))
+  return
 }
 
-async function updateKey(idx, key){
-    tx = db.transaction('keyDB', 'readwrite');
-    store = tx.objectStore('keyDB');
-    k = {
-        id : idx,
-        keys : key,
-    };
-    await store.put(k);
-    return;
-}
-
-async function getKey(idx){
-    tx = db.transaction('keyDB', 'readonly');
-    store = tx.objectStore('keyDB');
-    var a = await store.put(idx);
-    return a;
-}
+var symkey = null
+var pubkey = null
+var privkey = null
 
 async function generateSymKey(length = 256) {
     // Generate the AES key with GCM for message integrity
@@ -61,15 +16,10 @@ async function generateSymKey(length = 256) {
       name: 'AES-GCM',
       length,
     }, true, ['encrypt', 'decrypt']);
-    a = await subtle.exportKey('jwk', aeskey);
     // Store generated key into database
-    await updateKey(1, aeskey).then(function(){
-        return {
-            a,
-            aeskey,
-        };
-    })
-} 
+    symkey = aeskey
+    return {symkey}
+}
 
 const publicExponent = new Uint8Array([1, 0, 1]);
 async function generateRsaKey(modulusLength = 2048, hash = 'SHA-256') {
@@ -82,46 +32,47 @@ async function generateRsaKey(modulusLength = 2048, hash = 'SHA-256') {
       publicExponent,
       hash,
     }, true, ['encrypt', 'decrypt']);
-    await updateKey(2, publicKey).then(function(){
-    })
-    await updateKey(3, privateKey).then(function(){
-        return {
-            publicKey,
-            privateKey
+    pubkey = publicKey
+    privkey = privateKey
+    return {
+            pubkey,
+            privkey
         };
-    })
   } 
 
 
-async function encryptSymKey(key, pubkey){
+async function encryptSymKey(key, publkey){
     const ec = new TextEncoder();
     // Assumes that the key is passed in extracted form (jwk)
-    
-    if (pubkey == "self"){
-        var rsapubkey = await getKey(2);
-        pubkey = rsapubkey
+    if (pubkey == null){
+      return 0
+    }
+    if (publkey == "self"){
+        publkey = pubkey
     }
     if (key == "self"){
-        var symkey = await getKey(1);
-        key = await subtle.exportKey('raw', symkey);
+      key = symkey
+      
     }
-    enckey = ec.encode(new Uint8Array(key));
-    ciphertext = await crypto.subtle.encrypt(
+
+    const enckey = ec.encode(new Uint8Array(key));
+    const ciphertext = await crypto.subtle.encrypt(
         {
           name: "RSA-OAEP",
           hash: "SHA-256"
         },
-        pubkey,
+        publkey,
         enckey,
       );
     return ciphertext
 }
 
 async function decryptSymKey(buffer){
-    var rsaprivkey = getKey(3);
-    const privkey = rsaprivkey;
     const dc = new TextDecoder("utf-8");
-    const decsymkey = await crypto.subtle.decrypt(
+    if (privkey == null){
+      return 0
+    }
+    const decsymkey = await subtle.decrypt(
         {
           name: "RSA-OAEP",
           hash: "SHA-256"
@@ -129,28 +80,25 @@ async function decryptSymKey(buffer){
         privkey,
         buffer,
     );
-    b = dc.decode((new Uint8Array(decsymkey)).buffer);
+    const b = dc.decode((new Uint8Array(decsymkey)).buffer);
     var array = JSON.parse("[" + b + "]");
-    maybe = new Uint8Array(array)
+    var maybe = new Uint8Array(array)
     var length = maybe.length;
-    var buffer = new ArrayBuffer( length );
+    var buffer = new ArrayBuffer( 32 );
     var view = new Uint8Array(buffer);
     for ( var i = 0; i < length; i++) {
         view[i] = maybe[i];
     }
-    var done = await crypto.subtle.importKey("raw", buffer, "AES-GCM", true, ["encrypt", "decrypt",]);
-    await updateKey(1, done).then(function(){
-        return;
-    })
+    var done = await subtle.importKey("raw", buffer, "AES-GCM", true, ["encrypt", "decrypt",]);
+    symkey = done
+    return done;
 }
 
 async function encryptPassword(password) {
     const ec = new TextEncoder();
-    var symkey = await getKey(1);
-
-    const key = symkey;
-    const iv = crypto.getRandomValues(new Uint8Array(16));
-    const ciphertext = await crypto.subtle.encrypt({
+    var key = symkey;
+    const iv = window.crypto.getRandomValues(new Uint8Array(16));
+    const ciphertext = await window.crypto.subtle.encrypt({
       name: 'AES-GCM',
       iv,
     }, key, ec.encode(password));
@@ -162,15 +110,15 @@ async function encryptPassword(password) {
 
 async function decryptPassword(ciphertext, iv){
     const dec = new TextDecoder();
-    var symkey = await getKey(1);
-    const key = symkey;
-    const password = await crypto.subtle.decrypt({
+    var key = symkey;
+    const password = await window.crypto.subtle.decrypt({
         name: 'AES-GCM',
         iv,
     }, key, ciphertext);
-    return dec.decode(password);
+    const decoded = dec.decode(password)
+    return {decoded}
 }
 
 exports = module.exports = {
-    generateSymKey, generateRsaKey, encryptSymKey, decryptSymKey, encryptPassword, decryptPassword, init, 
+    generateSymKey, generateRsaKey, encryptSymKey, decryptSymKey, encryptPassword, decryptPassword
 }
