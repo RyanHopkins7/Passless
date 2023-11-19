@@ -41,6 +41,7 @@ export async function POST(req: Request) {
     const regResult = await f2l.attestationResult(clientAttestationResponse, attestationExpectations);
     console.log(regResult);
     // TODO: save publicKey and counter from regResult to user's info for future authentication calls
+    const pubKey = regResult.authnrData.get('credentialPublicKeyPem');
 
     return Response.json({'registration': 'success'});
 }

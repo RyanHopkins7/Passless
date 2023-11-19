@@ -11,8 +11,6 @@ export default function Home() {
 		const r = await fetch('/api/webauthn/credential');
 		const regOpts = await r.json();
 
-		console.log(regOpts);
-
 		const cred = await navigator.credentials.create({
 			publicKey: {
 				rp: regOpts.rp,
