@@ -20,7 +20,7 @@ export default function Vault() {
         const hmacKey = await window.crypto.subtle.generateKey({
             name: 'HMAC',
             hash: { name: 'SHA-256' }
-        }, true, ['sign', 'verify']);   
+        }, true, ['sign', 'verify']);
 
         return { aesKey: aesKey, hmacKey: hmacKey }
     }
@@ -35,31 +35,88 @@ export default function Vault() {
             hash: 'SHA-256'
         }, hmacKey, ct);
 
-        return {
-            ct: Buffer.from(ct).toString('base64'), 
+        // B64 encode again to make sure server enterprets as a string
+        return Buffer.from(JSON.stringify({
+            ct: Buffer.from(ct).toString('base64'),
             mac: Buffer.from(mac).toString('base64')
-        };
+        })).toString('base64');
+    }
+
+    const unseal = async (ct: string, aesKey: CryptoKey, hmacKey: CryptoKey) => {
+        const decoded_ct = JSON.parse(Buffer.from(ct, 'base64').toString('utf-8'));
+        decoded_ct.ct = Buffer.from(decoded_ct.ct, 'base64');
+        decoded_ct.mac = Buffer.from(decoded_ct.mac, 'base64');
+
+        const isValid = await window.crypto.subtle.verify('HMAC', hmacKey, decoded_ct.mac, decoded_ct.data);
+        if (!isValid) {
+            return null;
+        }
+
+        const pt = await window.crypto.subtle.decrypt({
+            name: 'AES-CBC'
+        }, aesKey, decoded_ct.ct);
+
+        return Buffer.from(pt).toString('utf-8');
     }
 
     useEffect(() => {
-        genSealKeys()
-            .then(({ aesKey, hmacKey }) => {
-                seal(JSON.stringify(data), aesKey, hmacKey)
-                    .then((seal) => {
-                        fetch('/api/passwords', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                // B64 encode again to make sure server enterprets as a string
-                                data: Buffer.from(
-                                    JSON.stringify(seal)
-                                ).toString('base64')
-                            })
+        if (localStorage.getItem('aesKey') !== null || localStorage.getItem('hmacKey') !== null) {
+            const aesKeyJWK = JSON.parse(localStorage.getItem('aesKey') || '');
+            const hmacKeyJWK = JSON.parse(localStorage.getItem('hmacKey') || '');
+
+            window.crypto.subtle.importKey('jwk', aesKeyJWK, { name: 'AES-CBC' }, true, ['encrypt', 'decrypt'])
+                .then((aesKey) => {
+                    window.crypto.subtle.importKey('jwk', hmacKeyJWK, { name: 'HMAC', hash: 'SHA-256' }, true, ['sign', 'verify'])
+                        .then((hmacKey) => {
+                            fetch('/api/passwords')
+                                .then((res)=>res.json())
+                                .then((resJson)=>{
+                                    unseal(resJson.passwordData, aesKey, hmacKey)
+                                        .then((pt) => {
+                                            setData(JSON.parse(pt || ''));
+                                        });
+                                });
                         });
+                });
+        }
+    }, []);
+
+    useEffect(() => {
+        if (localStorage.getItem('aesKey') === null || localStorage.getItem('hmacKey') === null) {
+            // Generate keys and save to local storage
+            genSealKeys()
+                .then(({ aesKey, hmacKey }) => {
+                    window.crypto.subtle.exportKey('jwk', aesKey).then((aesKeyJWK) => {
+                        localStorage.setItem('aesKey', JSON.stringify(aesKeyJWK));
                     });
-            });
+                    window.crypto.subtle.exportKey('jwk', hmacKey).then((hmacKeyJWK) => {
+                        localStorage.setItem('hmacKey', JSON.stringify(hmacKeyJWK));
+                    });
+                });
+        } else {
+            const aesKeyJWK = JSON.parse(localStorage.getItem('aesKey') || '');
+            const hmacKeyJWK = JSON.parse(localStorage.getItem('hmacKey') || '');
+
+            window.crypto.subtle.importKey('jwk', aesKeyJWK, { name: 'AES-CBC' }, true, ['encrypt', 'decrypt'])
+                .then((aesKey) => {
+                    window.crypto.subtle.importKey('jwk', hmacKeyJWK, { name: 'HMAC', hash: 'SHA-256' }, true, ['sign', 'verify'])
+                        .then((hmacKey) => {
+                            seal(JSON.stringify(data), aesKey, hmacKey)
+                                .then((sealed) => {
+                                    fetch('/api/passwords', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            data: sealed
+                                        })
+                                    });
+                                })
+                        });
+                });
+        }
+
     }, [data]);
 
     return (
