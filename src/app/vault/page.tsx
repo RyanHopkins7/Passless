@@ -26,9 +26,10 @@ export default function Vault() {
     }
 
     const seal = async (pt: string, aesKey: CryptoKey, hmacKey: CryptoKey) => {
+        const iv = window.crypto.getRandomValues(new Uint8Array(16));
         const ct = await window.crypto.subtle.encrypt({
             name: 'AES-CBC',
-            iv: window.crypto.getRandomValues(new Uint8Array(16))
+            iv: iv
         }, aesKey, Buffer.from(pt));
         const mac = await window.crypto.subtle.sign({
             name: 'HMAC',
@@ -37,24 +38,29 @@ export default function Vault() {
 
         // B64 encode again to make sure server enterprets as a string
         return Buffer.from(JSON.stringify({
+            iv: Buffer.from(iv).toString('base64'),
             ct: Buffer.from(ct).toString('base64'),
             mac: Buffer.from(mac).toString('base64')
         })).toString('base64');
     }
 
-    const unseal = async (ct: string, aesKey: CryptoKey, hmacKey: CryptoKey) => {
-        const decoded_ct = JSON.parse(Buffer.from(ct, 'base64').toString('utf-8'));
-        decoded_ct.ct = Buffer.from(decoded_ct.ct, 'base64');
-        decoded_ct.mac = Buffer.from(decoded_ct.mac, 'base64');
+    const unseal = async (token: string, aesKey: CryptoKey, hmacKey: CryptoKey) => {
+        // console.log(ct);
+        // console.log(Buffer.from(ct, 'base64').toString('utf-8'));
+        const decoded_token = JSON.parse(Buffer.from(token, 'base64').toString('utf-8'));
+        const ciphertext = Buffer.from(decoded_token.ct, 'base64').buffer;
+        const iv = Buffer.from(decoded_token.iv, 'base64').buffer;
+        const mac = Buffer.from(decoded_token.mac, 'base64').buffer;
 
-        const isValid = await window.crypto.subtle.verify('HMAC', hmacKey, decoded_ct.mac, decoded_ct.data);
+        const isValid = await window.crypto.subtle.verify('HMAC', hmacKey, mac, ciphertext);
         if (!isValid) {
             return null;
         }
 
         const pt = await window.crypto.subtle.decrypt({
-            name: 'AES-CBC'
-        }, aesKey, decoded_ct.ct);
+            name: 'AES-CBC',
+            iv: iv
+        }, aesKey, ciphertext);
 
         return Buffer.from(pt).toString('utf-8');
     }
@@ -71,8 +77,10 @@ export default function Vault() {
                             fetch('/api/passwords')
                                 .then((res)=>res.json())
                                 .then((resJson)=>{
-                                    unseal(resJson.passwordData, aesKey, hmacKey)
+                                    const ct = resJson.passwordData.json;
+                                    unseal(ct, aesKey, hmacKey)
                                         .then((pt) => {
+                                            console.log(pt);
                                             setData(JSON.parse(pt || ''));
                                         });
                                 });
@@ -93,6 +101,7 @@ export default function Vault() {
                         localStorage.setItem('hmacKey', JSON.stringify(hmacKeyJWK));
                     });
                 });
+        } else if (data.length == 0) {
         } else {
             const aesKeyJWK = JSON.parse(localStorage.getItem('aesKey') || '');
             const hmacKeyJWK = JSON.parse(localStorage.getItem('hmacKey') || '');
