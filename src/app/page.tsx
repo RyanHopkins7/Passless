@@ -5,7 +5,6 @@ import * as base64buffer from "base64-arraybuffer";
 
 export default function Home() {
 	const [username, setUsername] = useState('');
-	const [email, setEmail] = useState('');
     const [register, setRegister] = useState(true);
 
 	const registerUser = async (e: FormEvent) => {
@@ -16,9 +15,7 @@ export default function Home() {
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				'username': username,
-				'email': email,
-                'symmKey': ''
+				'username': username
 			})
 		});
 		window.location.replace('/devices');
@@ -70,15 +67,11 @@ export default function Home() {
 	return (
 		<main className="flex justify-center">
 			<div className="max-w-md my-10">
-				<h2 className="text-3xl font-bold mb-10">One Step Towards a Future Without Passwords.</h2>
+				<h2 className="text-3xl font-bold mb-10">Store private files and data on the web, no password required.</h2>
 				<form onSubmit={register ? registerUser : authenticateUser}>
-					{ register && <input required type="text" name="name" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Full Name" onChange={
+					{ register && <input required type="text" name="name" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Enter username" onChange={
 						(e) => setUsername(e.target.value)
 					}></input> }
-
-					<input required type="text" name="email" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Email Address" onChange={
-						(e) => setEmail(e.target.value)
-					}></input>
 
 					<input type="submit" className="block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer" value={register ? "Create an Account" : "Log In"}></input>
 				</form>

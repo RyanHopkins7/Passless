@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import './globals.css';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
 	title: 'Passless',
@@ -16,7 +17,9 @@ export default function RootLayout({
 		<html lang="en">
 			<body>
 				<div>
-					<Image src='/updatedLogo.jpg' width={198} height={88} alt='Passless'></Image>
+					<Link href="/">
+						<Image src='/updatedLogo.jpg' width={198} height={88} alt='Passless'></Image>
+					</Link>
 				</div>
 				{children}
 			</body>
