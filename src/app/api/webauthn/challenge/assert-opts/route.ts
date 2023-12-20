@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { f2l } from "../../f2l";
-import { createSession, updateSession } from "@/database/database";
+// import { createSession, updateSession } from "@/database/database";
 import { cookies } from "next/headers";
 
 export async function POST(req: NextRequest) {
@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     
     // Save challenge in session
     const sid = cookies().get('sid')?.value || '';
-    await updateSession(sid, challenge);
+    // await updateSession(sid, challenge);
 
     return Response.json({
         challenge: challenge,

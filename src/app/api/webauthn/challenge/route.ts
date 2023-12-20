@@ -10,17 +10,17 @@ export async function POST(req: NextRequest) {
     const sid = req.cookies.get('sid')?.value || '';
     const session = await getSession(sid);
 
-    const pubKey = await getPubKey(session.user_id);
+    // const pubKey = await getPubKey(session.user_id);
 
     const assertionExpectations = {
         challenge: session.challenge,
         origin: origin,
         factor: 'first' as Factor,
-        publicKey: pubKey, 
+        // publicKey: pubKey, 
         prevCounter: 0, // TODO: maybe zero will do?
         userHandle: session.email
     };
-    const authnResult = await f2l.assertionResult(clientAssertionResponse, assertionExpectations);
+    // const authnResult = await f2l.assertionResult(clientAssertionResponse, assertionExpectations);
 
     return Response.json({
         'authentication': 'successful',
