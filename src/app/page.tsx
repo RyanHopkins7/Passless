@@ -67,7 +67,7 @@ export default function Home() {
 	return (
 		<main className="flex justify-center">
 			<div className="max-w-md my-10">
-				<h2 className="text-3xl font-bold mb-10">Store private files and data on the web, no password required.</h2>
+				<h2 className="text-3xl font-bold mb-10">Share private files and data on the web, no password required.</h2>
 				<form onSubmit={register ? registerUser : authenticateUser}>
 					{ register && <input required type="text" name="name" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Enter username" onChange={
 						(e) => setUsername(e.target.value)

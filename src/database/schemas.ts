@@ -9,10 +9,28 @@ const webAuthenticatorSchema = new mongoose.Schema({
 const userSchema = new mongoose.Schema({
     username: {
         type: String,
-        unique: true
+        unique: true,
+        index: true,
+        required: true
     },
-    authenticators: [webAuthenticatorSchema]
+    authenticators: [webAuthenticatorSchema],
+    sessionIds: [String]
 });
 
-export const WebAuthenticator = mongoose.model('WebAuthenticator', webAuthenticatorSchema);
-export const User = mongoose.model('User', userSchema);
+const sessionSchema = new mongoose.Schema({
+    sid: {
+        type: String,
+        unique: true,
+        index: true,
+        required: true
+    },
+    user: {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+        required: true
+    }
+});
+
+export const WebAuthenticator = mongoose.models.WebAuthenticator || mongoose.model('WebAuthenticator', webAuthenticatorSchema);
+export const Session = mongoose.models.Session || mongoose.model('Session', sessionSchema);
+export const User = mongoose.models.User || mongoose.model('User', userSchema);
