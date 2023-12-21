@@ -5,11 +5,12 @@ import * as base64buffer from "base64-arraybuffer";
 
 export default function Home() {
 	const [username, setUsername] = useState('');
+    const [usernameConflict, setUsernameConflict] = useState('');
     const [register, setRegister] = useState(true);
 
 	const registerUser = async (e: FormEvent) => {
 		e.preventDefault();
-		await fetch('/api/users', {
+		const res = await fetch('/api/users', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
@@ -18,7 +19,12 @@ export default function Home() {
 				'username': username
 			})
 		});
-		window.location.replace('/devices');
+
+        if (res.status == 409) {
+            setUsernameConflict(`User with username ${username} already exists.`);
+        } else {
+            window.location.replace('/devices');
+        }
 	};
 
     const authenticateUser = async (e: FormEvent) => {
@@ -76,6 +82,7 @@ export default function Home() {
 					<input type="submit" className="block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer" value={register ? "Create an Account" : "Log In"}></input>
 				</form>
 				<a className="cursor-pointer hover:underline" onClick={(e) => setRegister(!register)}>{register ? "Sign in to an Existing Account" : "Create an Account"}</a>
+                <p className="text-red-500">{usernameConflict}</p>
 			</div>
 		</main>
 	)
