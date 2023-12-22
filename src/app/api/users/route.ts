@@ -27,12 +27,14 @@ export async function POST(req: Request) {
         // Replace an old session if a conflict exists in sid
         await Session.findOneAndReplace({ sid: sessionId }, {
             sid: sessionId,
-            user: newUser._id
+            user: newUser._id,
+            registrationStage: 'passphrase'
         });
     } else {
         const newSession = new Session({ 
             sid: sessionId,
-            user: newUser._id
+            user: newUser._id,
+            registrationStage: 'passphrase'
         });
         await newSession.save();
     }

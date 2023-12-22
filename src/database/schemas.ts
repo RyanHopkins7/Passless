@@ -28,7 +28,8 @@ const sessionSchema = new mongoose.Schema({
         type: mongoose.Schema.ObjectId,
         ref: 'User',
         required: true
-    }
+    },
+    registrationStage: String
 });
 
 export const WebAuthenticator = mongoose.models.WebAuthenticator || mongoose.model('WebAuthenticator', webAuthenticatorSchema);

@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import * as base64buffer from "base64-arraybuffer";
+import { redirect } from "next/navigation";
 
 export default function Home() {
 	const [username, setUsername] = useState('');
@@ -23,7 +24,7 @@ export default function Home() {
         if (res.status == 409) {
             setUsernameConflict(`User with username ${username} already exists.`);
         } else {
-            window.location.replace('/devices');
+            redirect('/passphrase');
         }
 	};
 
@@ -67,7 +68,7 @@ export default function Home() {
             })
         });
 
-        window.location.replace('/vault');
+        redirect('/vault');
     }
 
 	return (
@@ -75,9 +76,9 @@ export default function Home() {
 			<div className="max-w-md my-10">
 				<h2 className="text-3xl font-bold mb-10">Share private files and data on the web, no password required.</h2>
 				<form onSubmit={register ? registerUser : authenticateUser}>
-					{ register && <input required type="text" name="name" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Enter username" onChange={
+					<input required type="text" name="name" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Enter username" onChange={
 						(e) => setUsername(e.target.value)
-					}></input> }
+					}></input>
 
 					<input type="submit" className="block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer" value={register ? "Create an Account" : "Log In"}></input>
 				</form>
