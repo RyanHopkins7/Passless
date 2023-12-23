@@ -7,7 +7,7 @@ export default function PassphraseGenerator() {
     const [vaultKey, setVaultKey] = useState<CryptoKey>();
     const [sessionKEK, setSessionKEK] = useState<CryptoKey>();
     const [wordList, setWordList] = useState<string[]>();
-    const [passphrase, setPassphrase] = useState<string[]>();
+    const [passphrase, setPassphrase] = useState<string[]>(new Array(8).fill(''));
     const [passphraseKEK, setPassphraseKEK] = useState<CryptoKey>();
     const [passphraseHash, setPassphraseHash] = useState();
 
@@ -57,7 +57,9 @@ export default function PassphraseGenerator() {
 
     useEffect(() => {
         // Generate passphrase
-        setPassphrase(genRandPassphrase(wordList ?? []));
+        if ((wordList || []).length > 0) {
+            setPassphrase(genRandPassphrase(wordList ?? []));
+        }
     }, [wordList]);
 
     // TODO
@@ -69,5 +71,20 @@ export default function PassphraseGenerator() {
     // 6. Encrypt vault encryption secret with session AES key and a separate copy with passphrase key
     // 7. Send passphrase hash and wrapped vault encryption secrets to server
 
-    return <main></main>;
+    return (
+        <main className="flex justify-center">
+            <div className="max-w-xl my-10">
+                <h2 className="text-3xl font-bold mb-5">Passphrase</h2>
+                <p>
+                    You will need your passphrase to access your account in case you lose your devices.
+                    Please write it down and store it somewhere you won't lose it.
+                </p>
+                <div>
+                    {passphrase.map((w, i) => {
+                        return (<div key={i}>{w}</div>);
+                    })}
+                </div>
+            </div>
+        </main>
+    );
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import { FormEvent, useState } from "react";
-import * as base64buffer from "base64-arraybuffer";
+import { FormEvent, useState } from 'react';
+import * as base64buffer from 'base64-arraybuffer';
 
 export default function Home() {
 	const [username, setUsername] = useState<string>();
