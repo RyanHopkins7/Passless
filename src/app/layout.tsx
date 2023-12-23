@@ -18,7 +18,7 @@ export default function RootLayout({
 			<body>
 				<div>
 					<Link href="/">
-						<Image src='/updatedLogo.jpg' width={198} height={88} alt='Passless'></Image>
+						<Image src='/logo.jpg' width={198} height={88} alt='Passless'></Image>
 					</Link>
 				</div>
 				{children}

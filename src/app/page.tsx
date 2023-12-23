@@ -2,11 +2,10 @@
 
 import { FormEvent, useState } from "react";
 import * as base64buffer from "base64-arraybuffer";
-import { redirect } from "next/navigation";
 
 export default function Home() {
-	const [username, setUsername] = useState('');
-    const [usernameConflict, setUsernameConflict] = useState('');
+	const [username, setUsername] = useState<string>();
+    const [usernameConflict, setUsernameConflict] = useState<string>();
     const [register, setRegister] = useState(true);
 
 	const registerUser = async (e: FormEvent) => {
@@ -24,7 +23,7 @@ export default function Home() {
         if (res.status == 409) {
             setUsernameConflict(`User with username ${username} already exists.`);
         } else {
-            redirect('/passphrase');
+            window.location.replace('/passphrase');
         }
 	};
 
@@ -68,7 +67,7 @@ export default function Home() {
             })
         });
 
-        redirect('/vault');
+        window.location.replace('/vault');
     }
 
 	return (
