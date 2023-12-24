@@ -11,6 +11,8 @@ export default function PassphraseGenerator() {
     const [passphraseKeySalt, setPassphraseKeySalt] = useState<Uint8Array>();
     const [passphraseHash, setPassphraseHash] = useState<ArrayBuffer>();
     const [passphraseHashSalt, setPassphraseHashSalt] = useState<Uint8Array>();
+    const [generatingPassKey, setGeneratingPassKey] = useState<boolean>(true);
+    const [generatingPassHash, setGeneratingPassHash] = useState<boolean>(true);
 
     const genRandPassphrase = (words: string[]) => {
         const pass = new Array(8).fill('');
@@ -19,12 +21,9 @@ export default function PassphraseGenerator() {
             window.crypto.getRandomValues(arr);
             return arr[0] / (0xffffffff + 1);
         };
-        const randIdx = Math.floor(rand() * 8);
-        const randNum = Math.floor(rand() * 100);
 
         return pass.map((_, i) => {
-            const randWord = words[Math.floor(rand() * words.length)];
-            return (i === randIdx) ? randWord + randNum : randWord;
+            return words[Math.floor(rand() * words.length)];
         });
     };
 
@@ -71,8 +70,10 @@ export default function PassphraseGenerator() {
     }, [wordList]);
 
     useEffect(() => {
-        // TODO: prevent regenerating passphrase or sending data to server
-        // until key and hash are fully saved
+        // We want to prevent user interaction until key generation is complete
+        setGeneratingPassKey(true);
+        setGeneratingPassHash(true);
+
         const passString = passphrase.join('');
         if (passString !== '') {
             const enc = new TextEncoder();
@@ -108,6 +109,7 @@ export default function PassphraseGenerator() {
                     )
                         .then((key) => {
                             setPassphraseKey(key);
+                            setGeneratingPassKey(false);
                         });
 
                     // Derive hash from passphrase
@@ -126,6 +128,7 @@ export default function PassphraseGenerator() {
                         .then((key) => {
                             window.crypto.subtle.exportKey('raw', key).then((hash) => {
                                 setPassphraseHash(hash);
+                                setGeneratingPassHash(false);
                             });
                         });
                 });
@@ -155,13 +158,26 @@ export default function PassphraseGenerator() {
                     })}
                 </div>
                 <div className="flex justify-center">
-                    <button className="font-bold cursor-pointer hover:underline" onClick={() => {
-                        setPassphrase(genRandPassphrase(wordList))
+                    <button className={(generatingPassHash || generatingPassKey) ?
+                        "font-bold cursor-wait" :
+                        "font-bold cursor-pointer hover:underline"
+                    } onClick={() => {
+                        if (!generatingPassHash && !generatingPassKey) {
+                            setPassphrase(genRandPassphrase(wordList));
+                        }
                     }}>
                         <img className="inline w-8 h-8 my-5" src="/reset.svg"></img>
                         Regenerate passphrase
                     </button>
                 </div>
+                <div className="flex justify-center">
+                    <button className={(generatingPassHash || generatingPassKey) ?
+                        "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-wait" :
+                        "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer"}>
+                        I saved my passphrase
+                    </button>
+                </div>
+                { }
             </div>
         </main>
     );
