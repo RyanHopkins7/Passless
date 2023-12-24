@@ -1,16 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import * as argon2 from 'argon2';
 
 export default function PassphraseGenerator() {
     const [vaultKey, setVaultKey] = useState<CryptoKey>();
     const [sessionKEK, setSessionKEK] = useState<CryptoKey>();
     const [wordList, setWordList] = useState<string[]>([]);
     const [passphrase, setPassphrase] = useState<string[]>(new Array(8).fill(''));
-    const [passphraseKEK, setPassphraseKEK] = useState<CryptoKey>();
-    const [passphraseKEKSalt, setPassphraseKEKSalt] = useState<Int8Array>();
-    const [passphraseHash, setPassphraseHash] = useState();
+    const [passphraseKey, setPassphraseKey] = useState<CryptoKey>();
+    const [passphraseKeySalt, setPassphraseKeySalt] = useState<Uint8Array>();
+    const [passphraseHash, setPassphraseHash] = useState<ArrayBuffer>();
+    const [passphraseHashSalt, setPassphraseHashSalt] = useState<Uint8Array>();
 
     const genRandPassphrase = (words: string[]) => {
         const pass = new Array(8).fill('');
@@ -71,13 +71,19 @@ export default function PassphraseGenerator() {
     }, [wordList]);
 
     useEffect(() => {
-        // Generate encryption key and auth hash from passphrase
+        // TODO: prevent regenerating passphrase or sending data to server
+        // until key and hash are fully saved
         const passString = passphrase.join('');
         if (passString !== '') {
             const enc = new TextEncoder();
-            const salt = new Int8Array(16);
-            window.crypto.getRandomValues(salt);
-            setPassphraseKEKSalt(salt);
+
+            const keySalt = new Uint8Array(16);
+            window.crypto.getRandomValues(keySalt);
+            setPassphraseKeySalt(keySalt);
+
+            const hashSalt = new Uint8Array(16);
+            window.crypto.getRandomValues(hashSalt);
+            setPassphraseHashSalt(hashSalt);
 
             window.crypto.subtle.importKey(
                 'raw',
@@ -87,12 +93,13 @@ export default function PassphraseGenerator() {
                 ['deriveKey']
             )
                 .then((keyMaterial) => {
+                    // Derive key encryption key from passphrase
                     window.crypto.subtle.deriveKey(
                         {
                             name: 'PBKDF2',
-                            salt,
-                            iterations: 3000000,
-                            hash: 'SHA-256'
+                            salt: keySalt,
+                            iterations: 210000,
+                            hash: 'SHA-512'
                         },
                         keyMaterial,
                         { name: 'AES-KW', length: 256 },
@@ -100,7 +107,26 @@ export default function PassphraseGenerator() {
                         ['wrapKey', 'unwrapKey']
                     )
                         .then((key) => {
-                            setPassphraseKEK(key);
+                            setPassphraseKey(key);
+                        });
+
+                    // Derive hash from passphrase
+                    window.crypto.subtle.deriveKey(
+                        {
+                            name: 'PBKDF2',
+                            salt: hashSalt,
+                            iterations: 210000,
+                            hash: 'SHA-512'
+                        },
+                        keyMaterial,
+                        { name: 'AES-KW', length: 256 }, // Key type doesn't matter
+                        true,
+                        []
+                    )
+                        .then((key) => {
+                            window.crypto.subtle.exportKey('raw', key).then((hash) => {
+                                setPassphraseHash(hash);
+                            });
                         });
                 });
         }
