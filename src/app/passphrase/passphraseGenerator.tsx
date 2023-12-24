@@ -6,9 +6,10 @@ import * as argon2 from 'argon2';
 export default function PassphraseGenerator() {
     const [vaultKey, setVaultKey] = useState<CryptoKey>();
     const [sessionKEK, setSessionKEK] = useState<CryptoKey>();
-    const [wordList, setWordList] = useState<string[]>();
+    const [wordList, setWordList] = useState<string[]>([]);
     const [passphrase, setPassphrase] = useState<string[]>(new Array(8).fill(''));
     const [passphraseKEK, setPassphraseKEK] = useState<CryptoKey>();
+    const [passphraseKEKSalt, setPassphraseKEKSalt] = useState<Int8Array>();
     const [passphraseHash, setPassphraseHash] = useState();
 
     const genRandPassphrase = (words: string[]) => {
@@ -29,23 +30,27 @@ export default function PassphraseGenerator() {
 
     useEffect(() => {
         // Generate vault key
-        window.crypto.subtle.generateKey({
-            name: 'AES-GCM',
-            length: 256
-        },
+        window.crypto.subtle.generateKey(
+            {
+                name: 'AES-GCM',
+                length: 256
+            },
             true,
-            ['encrypt', 'decrypt'])
+            ['encrypt', 'decrypt']
+        )
             .then((key) => {
                 setVaultKey(key);
             });
 
         // Generate session KEK
-        window.crypto.subtle.generateKey({
-            name: 'AES-KW',
-            length: 256
-        },
+        window.crypto.subtle.generateKey(
+            {
+                name: 'AES-KW',
+                length: 256
+            },
             true,
-            ['wrapKey', 'unwrapKey'])
+            ['wrapKey', 'unwrapKey']
+        )
             .then((key) => {
                 setSessionKEK(key);
             });
@@ -60,10 +65,46 @@ export default function PassphraseGenerator() {
 
     useEffect(() => {
         // Generate passphrase
-        if ((wordList || []).length > 0) {
-            setPassphrase(genRandPassphrase(wordList ?? []));
+        if (wordList.length > 0) {
+            setPassphrase(genRandPassphrase(wordList));
         }
     }, [wordList]);
+
+    useEffect(() => {
+        // Generate encryption key and auth hash from passphrase
+        const passString = passphrase.join('');
+        if (passString !== '') {
+            const enc = new TextEncoder();
+            const salt = new Int8Array(16);
+            window.crypto.getRandomValues(salt);
+            setPassphraseKEKSalt(salt);
+
+            window.crypto.subtle.importKey(
+                'raw',
+                enc.encode(passString),
+                'PBKDF2',
+                true,
+                ['deriveKey']
+            )
+                .then((keyMaterial) => {
+                    window.crypto.subtle.deriveKey(
+                        {
+                            name: 'PBKDF2',
+                            salt,
+                            iterations: 3000000,
+                            hash: 'SHA-256'
+                        },
+                        keyMaterial,
+                        { name: 'AES-KW', length: 256 },
+                        true,
+                        ['wrapKey', 'unwrapKey']
+                    )
+                        .then((key) => {
+                            setPassphraseKEK(key);
+                        });
+                });
+        }
+    }, [passphrase]);
 
     // TODO
     // 1. Generate vault encryption secret
@@ -82,10 +123,18 @@ export default function PassphraseGenerator() {
                     You will need your passphrase to access your account in case you lose your devices.
                     Please write it down and store it somewhere you won't lose it.
                 </p>
-                <div className="grid grid-cols-4 gap-4 m-5">
+                <div className="grid grid-cols-4 gap-4 m-5 my-10">
                     {passphrase.map((w, i) => {
                         return (<div key={i} className="bg-light-purple w-30 h-12 px-4 py-3 rounded-md text-center font-bold">{w}</div>);
                     })}
+                </div>
+                <div className="flex justify-center">
+                    <button className="font-bold cursor-pointer hover:underline" onClick={() => {
+                        setPassphrase(genRandPassphrase(wordList))
+                    }}>
+                        <img className="inline w-8 h-8 my-5" src="/reset.svg"></img>
+                        Regenerate passphrase
+                    </button>
                 </div>
             </div>
         </main>

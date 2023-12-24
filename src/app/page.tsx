@@ -6,7 +6,7 @@ import * as base64buffer from 'base64-arraybuffer';
 export default function Home() {
 	const [username, setUsername] = useState<string>();
     const [usernameConflict, setUsernameConflict] = useState<string>();
-    const [register, setRegister] = useState(true);
+    const [register, setRegister] = useState<boolean>(true);
 
 	const registerUser = async (e: FormEvent) => {
 		e.preventDefault();
