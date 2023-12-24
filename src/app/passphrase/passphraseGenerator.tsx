@@ -18,9 +18,12 @@ export default function PassphraseGenerator() {
             window.crypto.getRandomValues(arr);
             return arr[0] / (0xffffffff + 1);
         };
+        const randIdx = Math.floor(rand() * 8);
+        const randNum = Math.floor(rand() * 100);
 
-        return pass.map((_) => {
-            return words[Math.floor(rand() * words.length)];
+        return pass.map((_, i) => {
+            const randWord = words[Math.floor(rand() * words.length)];
+            return (i === randIdx) ? randWord + randNum : randWord;
         });
     };
 
@@ -79,9 +82,9 @@ export default function PassphraseGenerator() {
                     You will need your passphrase to access your account in case you lose your devices.
                     Please write it down and store it somewhere you won't lose it.
                 </p>
-                <div>
+                <div className="grid grid-cols-4 gap-4 m-5">
                     {passphrase.map((w, i) => {
-                        return (<div key={i}>{w}</div>);
+                        return (<div key={i} className="bg-light-purple w-30 h-12 px-4 py-3 rounded-md text-center font-bold">{w}</div>);
                     })}
                 </div>
             </div>
