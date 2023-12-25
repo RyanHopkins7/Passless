@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 export default function PassphraseGenerator() {
     const [vaultKey, setVaultKey] = useState<CryptoKey>();
-    const [sessionKEK, setSessionKEK] = useState<CryptoKey>();
+    const [sessionKey, setSessionKey] = useState<CryptoKey>();
     const [wordList, setWordList] = useState<string[]>([]);
     const [passphrase, setPassphrase] = useState<string[]>(new Array(8).fill(''));
     const [passphraseKey, setPassphraseKey] = useState<CryptoKey>();
@@ -13,6 +13,15 @@ export default function PassphraseGenerator() {
     const [passphraseHashSalt, setPassphraseHashSalt] = useState<Uint8Array>();
     const [generatingPassKey, setGeneratingPassKey] = useState<boolean>(true);
     const [generatingPassHash, setGeneratingPassHash] = useState<boolean>(true);
+
+    // General order of operations
+    // 1. Generate vault encryption secret
+    // 2. Generate session AES key
+    // 3. Generate random passphrase
+    // 4. Generate encryption key from random passphrase
+    // 5. Generate authentication hash from random passphrase
+    // 6. Encrypt vault encryption secret with session AES key and a separate copy with passphrase key
+    // 7. Send passphrase hash and wrapped vault encryption secrets to server
 
     const genRandPassphrase = (words: string[]) => {
         const pass = new Array(8).fill('');
@@ -35,23 +44,23 @@ export default function PassphraseGenerator() {
                 length: 256
             },
             true,
-            ['encrypt', 'decrypt']
+            []
         )
             .then((key) => {
                 setVaultKey(key);
             });
 
-        // Generate session KEK
+        // Generate session key encryption key
         window.crypto.subtle.generateKey(
             {
                 name: 'AES-KW',
                 length: 256
             },
             true,
-            ['wrapKey', 'unwrapKey']
+            ['wrapKey']
         )
             .then((key) => {
-                setSessionKEK(key);
+                setSessionKey(key);
             });
 
         // Get word list
@@ -105,7 +114,7 @@ export default function PassphraseGenerator() {
                         keyMaterial,
                         { name: 'AES-KW', length: 256 },
                         true,
-                        ['wrapKey', 'unwrapKey']
+                        ['wrapKey']
                     )
                         .then((key) => {
                             setPassphraseKey(key);
@@ -135,15 +144,6 @@ export default function PassphraseGenerator() {
         }
     }, [passphrase]);
 
-    // TODO
-    // 1. Generate vault encryption secret
-    // 2. Generate session AES key
-    // 3. Generate random passphrase
-    // 4. Generate encryption key from random passphrase
-    // 5. Generate authentication hash from random passphrase
-    // 6. Encrypt vault encryption secret with session AES key and a separate copy with passphrase key
-    // 7. Send passphrase hash and wrapped vault encryption secrets to server
-
     return (
         <main className="flex justify-center">
             <div className="max-w-xl my-10">
@@ -162,7 +162,7 @@ export default function PassphraseGenerator() {
                         "font-bold cursor-wait" :
                         "font-bold cursor-pointer hover:underline"
                     } onClick={() => {
-                        if (!generatingPassHash && !generatingPassKey) {
+                        if (!generatingPassKey && !generatingPassHash) {
                             setPassphrase(genRandPassphrase(wordList));
                         }
                     }}>
@@ -173,11 +173,37 @@ export default function PassphraseGenerator() {
                 <div className="flex justify-center">
                     <button className={(generatingPassHash || generatingPassKey) ?
                         "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-wait" :
-                        "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer"}>
+                        "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer"}
+                        onClick={async () => {
+                            if (
+                                !generatingPassKey &&
+                                !generatingPassHash &&
+                                vaultKey !== undefined &&
+                                sessionKey !== undefined &&
+                                passphraseKey !== undefined
+                            ) {
+                                // Wrap vault keys with session key and passphrase derived key
+                                // Send wrapped vault keys and passphrase hash to the server
+                                const sessionWrappedVaultKey = await window.crypto.subtle.wrapKey(
+                                    'raw',
+                                    vaultKey,
+                                    sessionKey,
+                                    'AES-KW'
+                                );
+
+                                const passWrappedVaultKey = await window.crypto.subtle.wrapKey(
+                                    'raw',
+                                    vaultKey,
+                                    passphraseKey,
+                                    'AES-KW'
+                                );
+                                // TODO: send wrapped keys, salts, & passphrase hash to server
+                                // TODO: save session key encryption key in browser
+                            }
+                        }}>
                         I saved my passphrase
                     </button>
                 </div>
-                { }
             </div>
         </main>
     );

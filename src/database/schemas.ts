@@ -14,7 +14,11 @@ const userSchema = new mongoose.Schema({
         required: true
     },
     authenticators: [webAuthenticatorSchema],
-    sessionIds: [String]
+    sessionIds: [String],
+    passphraseHash: String,
+    passphraseHashSalt: String,
+    passphraseVaultKeySalt: String,
+    passphraseWrappedVaultKey: String
 });
 
 const sessionSchema = new mongoose.Schema({
@@ -29,7 +33,8 @@ const sessionSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    registrationStage: String
+    registrationStage: String,
+    sessionWrappedVaultKey: String
 });
 
 export const WebAuthenticator = mongoose.models.WebAuthenticator || mongoose.model('WebAuthenticator', webAuthenticatorSchema);
