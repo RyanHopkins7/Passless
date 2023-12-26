@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { argon2id } from '@noble/hashes/argon2';
+import { bytesToHex } from '@noble/hashes/utils';
 
 export default function PassphraseGenerator() {
     const [vaultKey, setVaultKey] = useState<CryptoKey>();
@@ -10,7 +11,7 @@ export default function PassphraseGenerator() {
     const [passphrase, setPassphrase] = useState<string[]>(new Array(8).fill(''));
     const [passphraseKey, setPassphraseKey] = useState<CryptoKey>();
     const [passphraseKeySalt, setPassphraseKeySalt] = useState<Uint8Array>();
-    const [passphraseHash, setPassphraseHash] = useState<ArrayBuffer>();
+    const [passphraseHash, setPassphraseHash] = useState<Uint8Array>();
     const [passphraseHashSalt, setPassphraseHashSalt] = useState<Uint8Array>();
     const [regeneratingPassphrase, setRegeneratingPassphrase] = useState<boolean>(true);
 
@@ -72,7 +73,7 @@ export default function PassphraseGenerator() {
     }, []);
 
     useEffect(() => {
-        // Generate passphrase
+        // Generate passphrase after wordlist loads
         if (wordList.length > 0 && passphrase.join('') === '') {
             setPassphrase(genRandPassphrase(wordList));
         }
@@ -119,7 +120,11 @@ export default function PassphraseGenerator() {
                             // Paramaters from OWASP
                             // https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#argon2id
                             setPassphraseKey(key);
-                            setPassphraseHash(argon2id(passString, hashSalt, { t: 1, m: 47104, p: 1 }));
+                            setPassphraseHash(argon2id(passString, hashSalt, {
+                                t: 1,
+                                m: 47104,
+                                p: 1
+                            }));
                             setRegeneratingPassphrase(false);
                         });
                 });
@@ -161,25 +166,48 @@ export default function PassphraseGenerator() {
                                 !regeneratingPassphrase &&
                                 vaultKey !== undefined &&
                                 sessionKey !== undefined &&
-                                passphraseKey !== undefined
+                                passphraseKey !== undefined &&
+                                passphraseKeySalt !== undefined &&
+                                passphraseHash !== undefined &&
+                                passphraseHashSalt !== undefined
                             ) {
                                 // Wrap vault keys with session key and passphrase derived key
                                 // Send wrapped vault keys and passphrase hash to the server
-                                const sessionWrappedVaultKey = await window.crypto.subtle.wrapKey(
-                                    'raw',
-                                    vaultKey,
-                                    sessionKey,
-                                    'AES-KW'
+                                // TODO: it may be better to generate & wrap session key
+                                // when creating the user instead of during the
+                                // passphrase generation step!!!
+                                const sessionWrappedVaultKey = new Uint8Array(
+                                    await window.crypto.subtle.wrapKey(
+                                        'raw',
+                                        vaultKey,
+                                        sessionKey,
+                                        'AES-KW'
+                                    )
                                 );
 
-                                const passWrappedVaultKey = await window.crypto.subtle.wrapKey(
-                                    'raw',
-                                    vaultKey,
-                                    passphraseKey,
-                                    'AES-KW'
+                                const passWrappedVaultKey = new Uint8Array(
+                                    await window.crypto.subtle.wrapKey(
+                                        'raw',
+                                        vaultKey,
+                                        passphraseKey,
+                                        'AES-KW'
+                                    )
                                 );
-                                // TODO: send wrapped keys, salts, & passphrase hash to server
-                                // TODO: save session key encryption key in browser
+
+                                fetch('/api/users/passphrase', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        // TODO: sessionWrappedVaultKey should not be sent here!!!
+                                        'sessionWrappedVaultKey': bytesToHex(sessionWrappedVaultKey),
+                                        'passWrappedVaultKey': bytesToHex(passWrappedVaultKey),
+                                        'passphraseKeySalt': bytesToHex(passphraseKeySalt),
+                                        'passphraseHash': bytesToHex(passphraseHash),
+                                        'passphraseHashSalt': bytesToHex(passphraseHashSalt)
+                                    })
+                                });
                             }
                         }}>
                         I saved my passphrase
