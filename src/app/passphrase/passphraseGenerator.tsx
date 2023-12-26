@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { argon2id } from '@noble/hashes/argon2';
 
 export default function PassphraseGenerator() {
     const [vaultKey, setVaultKey] = useState<CryptoKey>();
@@ -11,8 +12,7 @@ export default function PassphraseGenerator() {
     const [passphraseKeySalt, setPassphraseKeySalt] = useState<Uint8Array>();
     const [passphraseHash, setPassphraseHash] = useState<ArrayBuffer>();
     const [passphraseHashSalt, setPassphraseHashSalt] = useState<Uint8Array>();
-    const [generatingPassKey, setGeneratingPassKey] = useState<boolean>(true);
-    const [generatingPassHash, setGeneratingPassHash] = useState<boolean>(true);
+    const [regeneratingPassphrase, setRegeneratingPassphrase] = useState<boolean>(true);
 
     // General order of operations
     // 1. Generate vault encryption secret
@@ -44,7 +44,7 @@ export default function PassphraseGenerator() {
                 length: 256
             },
             true,
-            []
+            ['encrypt', 'decrypt']
         )
             .then((key) => {
                 setVaultKey(key);
@@ -73,15 +73,14 @@ export default function PassphraseGenerator() {
 
     useEffect(() => {
         // Generate passphrase
-        if (wordList.length > 0) {
+        if (wordList.length > 0 && passphrase.join('') === '') {
             setPassphrase(genRandPassphrase(wordList));
         }
     }, [wordList]);
 
     useEffect(() => {
         // We want to prevent user interaction until key generation is complete
-        setGeneratingPassKey(true);
-        setGeneratingPassHash(true);
+        setRegeneratingPassphrase(true);
 
         const passString = passphrase.join('');
         if (passString !== '') {
@@ -117,28 +116,11 @@ export default function PassphraseGenerator() {
                         ['wrapKey']
                     )
                         .then((key) => {
+                            // Paramaters from OWASP
+                            // https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#argon2id
                             setPassphraseKey(key);
-                            setGeneratingPassKey(false);
-                        });
-
-                    // Derive hash from passphrase
-                    window.crypto.subtle.deriveKey(
-                        {
-                            name: 'PBKDF2',
-                            salt: hashSalt,
-                            iterations: 210000,
-                            hash: 'SHA-512'
-                        },
-                        keyMaterial,
-                        { name: 'AES-KW', length: 256 }, // Key type doesn't matter
-                        true,
-                        []
-                    )
-                        .then((key) => {
-                            window.crypto.subtle.exportKey('raw', key).then((hash) => {
-                                setPassphraseHash(hash);
-                                setGeneratingPassHash(false);
-                            });
+                            setPassphraseHash(argon2id(passString, hashSalt, { t: 1, m: 47104, p: 1 }));
+                            setRegeneratingPassphrase(false);
                         });
                 });
         }
@@ -158,11 +140,11 @@ export default function PassphraseGenerator() {
                     })}
                 </div>
                 <div className="flex justify-center">
-                    <button className={(generatingPassHash || generatingPassKey) ?
+                    <button className={regeneratingPassphrase ?
                         "font-bold cursor-wait" :
                         "font-bold cursor-pointer hover:underline"
                     } onClick={() => {
-                        if (!generatingPassKey && !generatingPassHash) {
+                        if (!regeneratingPassphrase) {
                             setPassphrase(genRandPassphrase(wordList));
                         }
                     }}>
@@ -171,13 +153,12 @@ export default function PassphraseGenerator() {
                     </button>
                 </div>
                 <div className="flex justify-center">
-                    <button className={(generatingPassHash || generatingPassKey) ?
+                    <button className={regeneratingPassphrase ?
                         "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-wait" :
                         "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer"}
                         onClick={async () => {
                             if (
-                                !generatingPassKey &&
-                                !generatingPassHash &&
+                                !regeneratingPassphrase &&
                                 vaultKey !== undefined &&
                                 sessionKey !== undefined &&
                                 passphraseKey !== undefined
