@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { argon2id } from '@noble/hashes/argon2';
+import { argon2i } from '@noble/hashes/argon2';
 import { bytesToHex } from '@noble/hashes/utils';
 
 export default function PassphraseGenerator() {
@@ -120,9 +120,9 @@ export default function PassphraseGenerator() {
                             // Paramaters from OWASP
                             // https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#argon2id
                             setPassphraseKey(key);
-                            setPassphraseHash(argon2id(passString, hashSalt, {
-                                t: 1,
-                                m: 47104,
+                            setPassphraseHash(argon2i(passString, hashSalt, {
+                                t: 3,
+                                m: 12288,
                                 p: 1
                             }));
                             setRegeneratingPassphrase(false);

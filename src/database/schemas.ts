@@ -6,19 +6,8 @@ const webAuthenticatorSchema = new mongoose.Schema({
     pubKey: String
 });
 
-const userSchema = new mongoose.Schema({
-    username: {
-        type: String,
-        unique: true,
-        index: true,
-        required: true
-    },
-    authenticators: [webAuthenticatorSchema],
-    sessionIds: [String],
-    passphraseHash: String,
-    passphraseHashSalt: String,
-    passphraseVaultKeySalt: String,
-    passphraseWrappedVaultKey: String
+const deviceSchema = new mongoose.Schema({
+    deviceWrappedVaultKey: String
 });
 
 const sessionSchema = new mongoose.Schema({
@@ -32,11 +21,27 @@ const sessionSchema = new mongoose.Schema({
         type: mongoose.Schema.ObjectId,
         ref: 'User',
         required: true
+    }
+});
+
+const userSchema = new mongoose.Schema({
+    username: {
+        type: String,
+        unique: true,
+        index: true,
+        required: true
     },
+    authenticators: [webAuthenticatorSchema],
+    devices: [deviceSchema],
+    sessions: [sessionSchema],
     registrationStage: String,
-    sessionWrappedVaultKey: String
+    passphraseHash: String,
+    passphraseHashSalt: String,
+    passphraseKeySalt: String,
+    passphraseWrappedVaultKey: String
 });
 
 export const WebAuthenticator = mongoose.models.WebAuthenticator || mongoose.model('WebAuthenticator', webAuthenticatorSchema);
 export const Session = mongoose.models.Session || mongoose.model('Session', sessionSchema);
+export const Device = mongoose.models.Device || mongoose.model('Device', deviceSchema);
 export const User = mongoose.models.User || mongoose.model('User', userSchema);

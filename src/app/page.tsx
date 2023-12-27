@@ -8,8 +8,10 @@ export default function Home() {
 	const [username, setUsername] = useState<string>();
     const [usernameConflict, setUsernameConflict] = useState<string>();
     const [register, setRegister] = useState<boolean>(true);
+    const [loading, setLoading] = useState<boolean>(false);
 
 	const registerUser = async (e: FormEvent) => {
+        setLoading(true);
 		e.preventDefault();
 
         // Generate vault encryption key
@@ -22,22 +24,22 @@ export default function Home() {
             ['encrypt', 'decrypt']
         );
 
-        // Generate session key encryption key
-        const sessionKey = await window.crypto.subtle.generateKey(
+        // Generate device key encryption key
+        const deviceKey = await window.crypto.subtle.generateKey(
             {
                 name: 'AES-KW',
                 length: 256
             },
             true,
-            ['wrapKey']
+            ['wrapKey', 'unwrapKey']
         );
 
         // Wrap vault encyption key with session key encryption key
-        const sessionWrappedVaultKey = new Uint8Array(
+        const deviceWrappedVaultKey = new Uint8Array(
             await window.crypto.subtle.wrapKey(
                 'raw',
                 vaultKey,
-                sessionKey,
+                deviceKey,
                 'AES-KW'
             )
         );
@@ -49,14 +51,26 @@ export default function Home() {
 			},
 			body: JSON.stringify({
 				'username': username,
-                'sessionWrappedVaultKey': bytesToHex(sessionWrappedVaultKey)
+                'deviceWrappedVaultKey': bytesToHex(deviceWrappedVaultKey)
 			})
 		});
 
         if (res.status == 409) {
             setUsernameConflict(`User with username ${username} already exists.`);
+            setLoading(false);
         } else {
-            // TODO: save session key encryption key in browser
+            // Save device id to allow looking up wrapped vault key later
+            const resJson = await res.json();
+            window.localStorage.setItem('deviceId', resJson.deviceId);
+
+            // Save device key encryption key in browser
+            window.localStorage.setItem(
+                'deviceKey', 
+                JSON.stringify(
+                    await window.crypto.subtle.exportKey('jwk', deviceKey)
+                )
+            );
+
             window.location.replace('/passphrase');
         }
 	};
@@ -114,7 +128,11 @@ export default function Home() {
 						(e) => setUsername(e.target.value)
 					}></input>
 
-					<input type="submit" className="block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer" value={register ? "Create an Account" : "Log In"}></input>
+					<input type="submit" className={
+                        loading 
+                        ? "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-wait"
+                        : "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer"
+                    } value={register ? "Create an Account" : "Log In"}></input>
 				</form>
 				<a className="cursor-pointer hover:underline" onClick={(e) => setRegister(!register)}>{register ? "Sign in to an Existing Account" : "Create an Account"}</a>
                 <p className="text-red-500">{usernameConflict}</p>
