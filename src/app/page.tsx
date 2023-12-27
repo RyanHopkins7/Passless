@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import * as base64buffer from 'base64-arraybuffer';
+import { bytesToHex } from '@noble/hashes/utils';
 
 export default function Home() {
 	const [username, setUsername] = useState<string>();
@@ -10,24 +11,58 @@ export default function Home() {
 
 	const registerUser = async (e: FormEvent) => {
 		e.preventDefault();
+
+        // Generate vault encryption key
+        const vaultKey = await window.crypto.subtle.generateKey(
+            {
+                name: 'AES-GCM',
+                length: 256
+            },
+            true,
+            ['encrypt', 'decrypt']
+        );
+
+        // Generate session key encryption key
+        const sessionKey = await window.crypto.subtle.generateKey(
+            {
+                name: 'AES-KW',
+                length: 256
+            },
+            true,
+            ['wrapKey']
+        );
+
+        // Wrap vault encyption key with session key encryption key
+        const sessionWrappedVaultKey = new Uint8Array(
+            await window.crypto.subtle.wrapKey(
+                'raw',
+                vaultKey,
+                sessionKey,
+                'AES-KW'
+            )
+        );
+
 		const res = await fetch('/api/users', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				'username': username
+				'username': username,
+                'sessionWrappedVaultKey': bytesToHex(sessionWrappedVaultKey)
 			})
 		});
 
         if (res.status == 409) {
             setUsernameConflict(`User with username ${username} already exists.`);
         } else {
+            // TODO: save session key encryption key in browser
             window.location.replace('/passphrase');
         }
 	};
 
     const authenticateUser = async (e: FormEvent) => {
+        // TODO: this probably needs to be redone
         e.preventDefault();
 
         const r = await fetch('/api/webauthn/credential/reg-opts', { method: 'POST' });

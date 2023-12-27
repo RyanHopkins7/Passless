@@ -22,20 +22,18 @@ export async function POST(req: Request) {
     // Create a new session
     const sessionId = randomBytes(32).toString('base64');
     const session = await Session.exists({ sid: sessionId });
+    const sessionData = {
+        sid: sessionId,
+        user: newUser._id,
+        registrationStage: 'passphrase',
+        sessionWrappedVaultKey: data.sessionWrappedVaultKey
+    };
 
     if (session !== null) {
         // Replace an old session if a conflict exists in sid
-        await Session.findOneAndReplace({ sid: sessionId }, {
-            sid: sessionId,
-            user: newUser._id,
-            registrationStage: 'passphrase'
-        });
+        await Session.findOneAndReplace({ sid: sessionId }, sessionData);
     } else {
-        const newSession = new Session({ 
-            sid: sessionId,
-            user: newUser._id,
-            registrationStage: 'passphrase'
-        });
+        const newSession = new Session(sessionData);
         await newSession.save();
     }
     
