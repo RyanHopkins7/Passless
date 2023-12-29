@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
     // Create a new device and attach to new user
     const newDevice = new Device({ deviceWrappedVaultKey: data.deviceWrappedVaultKey });
-    const newUser = new User({ 
+    const newUser = new User({
         username: data.username,
         devices: [newDevice],
         registrationStage: 'passphrase'
@@ -27,19 +27,22 @@ export async function POST(req: Request) {
 
     // Create a new session
     const sessionId = randomBytes(32).toString('base64');
-    await Session.replaceOne({}, {
+    const res = await Session.replaceOne({}, {
         user: newUser._id,
         sid: sessionId
     }, {
         upsert: true
     });
 
-    newUser.sessions = [await Session.findOne({ sid: sessionId })];
+    newUser.sessions = (res.upsertedId !== null)
+        ? [await Session.findById(res.upsertedId)]
+        : [await Session.findOne({ 'sid': sessionId })];
+
     await newUser.save();
     await newDevice.save();
 
     cookies().set({
-        name: 'sid', 
+        name: 'sid',
         value: sessionId,
         httpOnly: true,
         path: '/',

@@ -5,14 +5,11 @@ import * as base64buffer from 'base64-arraybuffer';
 import { bytesToHex } from '@noble/hashes/utils';
 
 export default function Home() {
-	const [username, setUsername] = useState<string>();
     const [usernameConflict, setUsernameConflict] = useState<string>();
-    const [register, setRegister] = useState<boolean>(true);
     const [loading, setLoading] = useState<boolean>(false);
 
-	const registerUser = async (e: FormEvent) => {
+    const registerUser = async (d: FormData) => {
         setLoading(true);
-		e.preventDefault();
 
         // Generate vault encryption key
         const vaultKey = await window.crypto.subtle.generateKey(
@@ -44,19 +41,19 @@ export default function Home() {
             )
         );
 
-		const res = await fetch('/api/users', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				'username': username,
+        const res = await fetch('/api/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                'username': d.get('username'),
                 'deviceWrappedVaultKey': bytesToHex(deviceWrappedVaultKey)
-			})
-		});
+            })
+        });
 
         if (res.status == 409) {
-            setUsernameConflict(`User with username ${username} already exists.`);
+            setUsernameConflict(`User with username ${d.get('username')} already exists.`);
             setLoading(false);
         } else {
             // Save device id to allow looking up wrapped vault key later
@@ -65,7 +62,7 @@ export default function Home() {
 
             // Save device key encryption key in browser
             window.localStorage.setItem(
-                'deviceKey', 
+                'deviceKey',
                 JSON.stringify(
                     await window.crypto.subtle.exportKey('jwk', deviceKey)
                 )
@@ -73,7 +70,7 @@ export default function Home() {
 
             window.location.replace('/passphrase');
         }
-	};
+    };
 
     const authenticateUser = async (e: FormEvent) => {
         // TODO: this probably needs to be redone
@@ -119,24 +116,22 @@ export default function Home() {
         window.location.replace('/vault');
     }
 
-	return (
-		<main className="flex justify-center">
-			<div className="max-w-md my-10">
-				<h2 className="text-3xl font-bold mb-10">Share private files and data on the web, no password required.</h2>
-				<form onSubmit={register ? registerUser : authenticateUser}>
-					<input required type="text" name="name" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Enter username" onChange={
-						(e) => setUsername(e.target.value)
-					}></input>
+    return (
+        <main className="flex justify-center">
+            <div className="max-w-md my-10">
+                <h2 className="text-3xl font-bold mb-10">Share private files and data on the web, no password required.</h2>
+                <form action={registerUser}>
+                    <input required type="text" name="username" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Enter username"></input>
 
-					<input type="submit" className={
-                        loading 
-                        ? "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-wait"
-                        : "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer"
-                    } value={register ? "Create an Account" : "Log In"}></input>
-				</form>
-				<a className="cursor-pointer hover:underline" onClick={(e) => setRegister(!register)}>{register ? "Sign in to an Existing Account" : "Create an Account"}</a>
+                    <input type="submit" className={
+                        loading
+                            ? "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-wait"
+                            : "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer"
+                    } value={"Create an Account"}></input>
+                </form>
+                <a className="cursor-pointer hover:underline">Sign in to an Existing Account</a>
                 <p className="text-red-500">{usernameConflict}</p>
-			</div>
-		</main>
-	)
+            </div>
+        </main>
+    )
 }
