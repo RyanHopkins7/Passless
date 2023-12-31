@@ -165,7 +165,7 @@ export default function PassphraseGenerator() {
     return (
         <main className="flex justify-center">
             <div className="max-w-xl my-10">
-                <h2 className="text-3xl font-bold mb-5">Passphrase</h2>
+                <h2 className="text-3xl font-bold mb-5">Generate Passphrase</h2>
                 <p>
                     You will need your passphrase to access your account in case you lose your devices.
                     Please write it down and store it somewhere you won't lose it.
@@ -201,6 +201,8 @@ export default function PassphraseGenerator() {
                                 passphraseHash !== undefined &&
                                 passphraseHashSalt !== undefined
                             ) {
+                                setLoading(true);
+
                                 // Wrap vault key with passphrase derived key
                                 // Send wrapped vault key and passphrase hash to the server
                                 const passWrappedVaultKey = new Uint8Array(
@@ -223,7 +225,15 @@ export default function PassphraseGenerator() {
                                         'passphraseHash': bytesToHex(passphraseHash),
                                         'passphraseHashSalt': bytesToHex(passphraseHashSalt)
                                     })
-                                });
+                                })
+                                    .then(res => {
+                                        if (res.status === 201) {
+                                            setLoading(false);
+                                            window.location.replace('/passphrase/validate');
+                                        } else {
+                                            // TODO
+                                        }
+                                    });
                             }
                         }}>
                         I saved my passphrase

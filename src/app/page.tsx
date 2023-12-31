@@ -69,7 +69,7 @@ export default function Home() {
                 )
             );
 
-            window.location.replace('/passphrase');
+            window.location.replace('/passphrase/generate');
         }
     };
 

@@ -5,7 +5,7 @@ import { Session, User } from "@/database/schemas";
 import { redirect } from "next/navigation";
 import PassphraseGenerator from "./passphraseGenerator";
 
-export default async function Passphrase() {
+export default async function GenPassphrase() {
     const sid = cookies().get('sid')?.value;
     const session = await Session.findOne({
         sid: sid
