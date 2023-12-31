@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { argon2i } from '@noble/hashes/argon2';
-import { bytesToHex } from '@noble/hashes/utils';
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 
 export default function PassphraseGenerator() {
     const [vaultKey, setVaultKey] = useState<CryptoKey>();
-    const [sessionKey, setSessionKey] = useState<CryptoKey>();
     const [wordList, setWordList] = useState<string[]>([]);
     const [passphrase, setPassphrase] = useState<string[]>(new Array(8).fill(''));
     const [passphraseKey, setPassphraseKey] = useState<CryptoKey>();
@@ -38,35 +37,41 @@ export default function PassphraseGenerator() {
     };
 
     useEffect(() => {
-        // TODO: get vault key
-        // TODO: import device key from local storage
-        // TODO: unwrap vault key using device key
+        // TODO: what if user clears local storage???
+        const deviceId = window.localStorage.getItem('deviceId');
 
-        // // Generate vault key
-        // window.crypto.subtle.generateKey(
-        //     {
-        //         name: 'AES-GCM',
-        //         length: 256
-        //     },
-        //     true,
-        //     ['encrypt', 'decrypt']
-        // )
-        //     .then((key) => {
-        //         setVaultKey(key);
-        //     });
+        // Get wrapped vault key from server
+        fetch(`/api/user/devices/${deviceId}/key`)
+            .then(res => res.json())
+            .then(async resJson => {
+                // Unwrap vault key
+                // TODO: could it be more efficient to store deviceKey in raw format?
+                const deviceKey = await window.crypto.subtle.importKey(
+                    'jwk',
+                    JSON.parse(
+                        window.localStorage.getItem('deviceKey') || '{}'
+                    ),
+                    {
+                        name: 'AES-KW',
+                        length: 256
+                    },
+                    true,
+                    ['wrapKey', 'unwrapKey']
+                );
 
-        // // Generate session key encryption key
-        // window.crypto.subtle.generateKey(
-        //     {
-        //         name: 'AES-KW',
-        //         length: 256
-        //     },
-        //     true,
-        //     ['wrapKey']
-        // )
-        //     .then((key) => {
-        //         setSessionKey(key);
-        //     });
+                const wrappedKey = hexToBytes(resJson.key);
+                setVaultKey(
+                    await window.crypto.subtle.unwrapKey(
+                        'raw',
+                        wrappedKey,
+                        deviceKey,
+                        'AES-KW',
+                        'AES-GCM',
+                        true,
+                        ['encrypt', 'decrypt']
+                    )
+                );
+            });
 
         // Get word list
         fetch('/wordlist.txt')
@@ -169,7 +174,6 @@ export default function PassphraseGenerator() {
                             if (
                                 !regeneratingPassphrase &&
                                 vaultKey !== undefined &&
-                                sessionKey !== undefined &&
                                 passphraseKey !== undefined &&
                                 passphraseKeySalt !== undefined &&
                                 passphraseHash !== undefined &&
@@ -180,15 +184,6 @@ export default function PassphraseGenerator() {
                                 // TODO: it may be better to generate & wrap session key
                                 // when creating the user instead of during the
                                 // passphrase generation step!!!
-                                const sessionWrappedVaultKey = new Uint8Array(
-                                    await window.crypto.subtle.wrapKey(
-                                        'raw',
-                                        vaultKey,
-                                        sessionKey,
-                                        'AES-KW'
-                                    )
-                                );
-
                                 const passWrappedVaultKey = new Uint8Array(
                                     await window.crypto.subtle.wrapKey(
                                         'raw',
@@ -204,8 +199,6 @@ export default function PassphraseGenerator() {
                                         'Content-Type': 'application/json'
                                     },
                                     body: JSON.stringify({
-                                        // TODO: sessionWrappedVaultKey should not be sent here!!!
-                                        'sessionWrappedVaultKey': bytesToHex(sessionWrappedVaultKey),
                                         'passWrappedVaultKey': bytesToHex(passWrappedVaultKey),
                                         'passphraseKeySalt': bytesToHex(passphraseKeySalt),
                                         'passphraseHash': bytesToHex(passphraseHash),
