@@ -10,10 +10,10 @@ export default async function Passphrase() {
     const session = await Session.findOne({
         sid: sid
     });
-    const user = await User.findById(session.user);
+    const user = await User.findById(session?.user);
 
     // TODO: also allow resetting passphrase 
-    if (!sid || !user || user.registrationStage !== 'passphrase') {
+    if (!user || user.registrationStage !== 'passphrase') {
         redirect('/');
     }
 

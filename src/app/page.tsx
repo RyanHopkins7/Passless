@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+// TODO: try to get rid of base64buffer requirement
 import * as base64buffer from 'base64-arraybuffer';
 import { bytesToHex } from '@noble/hashes/utils';
 

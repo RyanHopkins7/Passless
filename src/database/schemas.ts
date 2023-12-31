@@ -45,6 +45,7 @@ const userSchema = new mongoose.Schema({
     registrationStage: String,
     passphraseHash: String,
     passphraseHashSalt: String,
+    passphraseHashPepper: String,
     passphraseKeySalt: String,
     passphraseWrappedVaultKey: String
 });

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { argon2i } from '@noble/hashes/argon2';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 
 export default function PassphraseGenerator() {
@@ -12,7 +11,7 @@ export default function PassphraseGenerator() {
     const [passphraseKeySalt, setPassphraseKeySalt] = useState<Uint8Array>();
     const [passphraseHash, setPassphraseHash] = useState<Uint8Array>();
     const [passphraseHashSalt, setPassphraseHashSalt] = useState<Uint8Array>();
-    const [regeneratingPassphrase, setRegeneratingPassphrase] = useState<boolean>(true);
+    const [loading, setLoading] = useState<boolean>(true);
 
     // General order of operations
     // 1. Get device wrapped vault key from server
@@ -37,6 +36,8 @@ export default function PassphraseGenerator() {
     };
 
     useEffect(() => {
+        // TODO: there seems to be an issue that the passphrase
+        // is not generated upon page load from time to time...
         // TODO: what if user clears local storage???
         const deviceId = window.localStorage.getItem('deviceId');
 
@@ -90,7 +91,7 @@ export default function PassphraseGenerator() {
 
     useEffect(() => {
         // We want to prevent user interaction until key generation is complete
-        setRegeneratingPassphrase(true);
+        setLoading(true);
 
         const passString = passphrase.join('');
         if (passString !== '') {
@@ -111,31 +112,52 @@ export default function PassphraseGenerator() {
                 true,
                 ['deriveKey']
             )
-                .then((keyMaterial) => {
+                .then(async (keyMaterial) => {
                     // Derive key encryption key from passphrase
-                    window.crypto.subtle.deriveKey(
+                    // Parameters exceed OWASP recommendations
+                    // https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#pbkdf2
+                    const key = await window.crypto.subtle.deriveKey(
                         {
                             name: 'PBKDF2',
                             salt: keySalt,
-                            iterations: 210000,
+                            iterations: 300000,
                             hash: 'SHA-512'
                         },
                         keyMaterial,
                         { name: 'AES-KW', length: 256 },
                         true,
                         ['wrapKey']
-                    )
-                        .then((key) => {
-                            // Paramaters from OWASP
-                            // https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#argon2id
-                            setPassphraseKey(key);
-                            setPassphraseHash(argon2i(passString, hashSalt, {
-                                t: 3,
-                                m: 12288,
-                                p: 1
-                            }));
-                            setRegeneratingPassphrase(false);
-                        });
+                    );
+
+                    setPassphraseKey(key);
+
+                    // PBKDF2 is not memory hard
+                    // Therefore, it should not be so vulnerable to side channels
+                    // and may be more suitable for hashing on the client side
+                    const hashKey = await window.crypto.subtle.deriveKey(
+                        {
+                            name: 'PBKDF2',
+                            salt: hashSalt,
+                            iterations: 300000,
+                            hash: 'SHA-512'
+                        },
+                        keyMaterial,
+                        // Algorithm doesn't really matter
+                        { name: 'AES-KW', length: 256 },
+                        true,
+                        // Key usages don't really matter either
+                        ['wrapKey']
+                    );
+
+                    const hash = new Uint8Array(
+                        await window.crypto.subtle.exportKey(
+                            'raw',
+                            hashKey
+                        )
+                    );
+
+                    setPassphraseHash(hash);
+                    setLoading(false);
                 });
         }
     }, [passphrase]);
@@ -154,11 +176,11 @@ export default function PassphraseGenerator() {
                     })}
                 </div>
                 <div className="flex justify-center">
-                    <button className={regeneratingPassphrase ?
+                    <button className={loading ?
                         "font-bold cursor-wait" :
                         "font-bold cursor-pointer hover:underline"
                     } onClick={() => {
-                        if (!regeneratingPassphrase) {
+                        if (!loading) {
                             setPassphrase(genRandPassphrase(wordList));
                         }
                     }}>
@@ -167,23 +189,20 @@ export default function PassphraseGenerator() {
                     </button>
                 </div>
                 <div className="flex justify-center">
-                    <button className={regeneratingPassphrase ?
+                    <button className={loading ?
                         "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-wait" :
                         "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer"}
                         onClick={async () => {
                             if (
-                                !regeneratingPassphrase &&
+                                !loading &&
                                 vaultKey !== undefined &&
                                 passphraseKey !== undefined &&
                                 passphraseKeySalt !== undefined &&
                                 passphraseHash !== undefined &&
                                 passphraseHashSalt !== undefined
                             ) {
-                                // Wrap vault keys with session key and passphrase derived key
-                                // Send wrapped vault keys and passphrase hash to the server
-                                // TODO: it may be better to generate & wrap session key
-                                // when creating the user instead of during the
-                                // passphrase generation step!!!
+                                // Wrap vault key with passphrase derived key
+                                // Send wrapped vault key and passphrase hash to the server
                                 const passWrappedVaultKey = new Uint8Array(
                                     await window.crypto.subtle.wrapKey(
                                         'raw',
@@ -199,7 +218,7 @@ export default function PassphraseGenerator() {
                                         'Content-Type': 'application/json'
                                     },
                                     body: JSON.stringify({
-                                        'passWrappedVaultKey': bytesToHex(passWrappedVaultKey),
+                                        'passphraseWrappedVaultKey': bytesToHex(passWrappedVaultKey),
                                         'passphraseKeySalt': bytesToHex(passphraseKeySalt),
                                         'passphraseHash': bytesToHex(passphraseHash),
                                         'passphraseHashSalt': bytesToHex(passphraseHashSalt)
