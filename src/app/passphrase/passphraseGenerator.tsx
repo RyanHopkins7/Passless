@@ -16,8 +16,8 @@ export default function PassphraseGenerator() {
     const [regeneratingPassphrase, setRegeneratingPassphrase] = useState<boolean>(true);
 
     // General order of operations
-    // 1. Generate vault encryption secret
-    // 2. Generate session AES key
+    // 1. Get device wrapped vault key from server
+    // 2. Decrypt wrapped vault encryption secret
     // 3. Generate random passphrase
     // 4. Generate encryption key from random passphrase
     // 5. Generate authentication hash from random passphrase
@@ -38,31 +38,35 @@ export default function PassphraseGenerator() {
     };
 
     useEffect(() => {
-        // Generate vault key
-        window.crypto.subtle.generateKey(
-            {
-                name: 'AES-GCM',
-                length: 256
-            },
-            true,
-            ['encrypt', 'decrypt']
-        )
-            .then((key) => {
-                setVaultKey(key);
-            });
+        // TODO: get vault key
+        // TODO: import device key from local storage
+        // TODO: unwrap vault key using device key
 
-        // Generate session key encryption key
-        window.crypto.subtle.generateKey(
-            {
-                name: 'AES-KW',
-                length: 256
-            },
-            true,
-            ['wrapKey']
-        )
-            .then((key) => {
-                setSessionKey(key);
-            });
+        // // Generate vault key
+        // window.crypto.subtle.generateKey(
+        //     {
+        //         name: 'AES-GCM',
+        //         length: 256
+        //     },
+        //     true,
+        //     ['encrypt', 'decrypt']
+        // )
+        //     .then((key) => {
+        //         setVaultKey(key);
+        //     });
+
+        // // Generate session key encryption key
+        // window.crypto.subtle.generateKey(
+        //     {
+        //         name: 'AES-KW',
+        //         length: 256
+        //     },
+        //     true,
+        //     ['wrapKey']
+        // )
+        //     .then((key) => {
+        //         setSessionKey(key);
+        //     });
 
         // Get word list
         fetch('/wordlist.txt')
@@ -194,7 +198,7 @@ export default function PassphraseGenerator() {
                                     )
                                 );
 
-                                fetch('/api/users/passphrase', {
+                                fetch('/api/user/passphrase', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json'

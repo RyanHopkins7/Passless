@@ -1,6 +1,14 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 mongoose.connect('mongodb://localhost:27017/passless');
+
+export interface IWebAuthenticator {};
+export interface IDevice {
+    deviceWrappedVaultKey: String,
+    _id: Types.ObjectId
+};
+export interface ISession {};
+export interface IUser {};
 
 const webAuthenticatorSchema = new mongoose.Schema({
     pubKey: String

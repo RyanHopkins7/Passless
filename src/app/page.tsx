@@ -41,7 +41,7 @@ export default function Home() {
             )
         );
 
-        const res = await fetch('/api/users', {
+        const res = await fetch('/api/user', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -73,7 +73,7 @@ export default function Home() {
     };
 
     const authenticateUser = async (e: FormEvent) => {
-        // TODO: this probably needs to be redone
+        // TODO: this needs to be redone
         e.preventDefault();
 
         const r = await fetch('/api/webauthn/credential/reg-opts', { method: 'POST' });
