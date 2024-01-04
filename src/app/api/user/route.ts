@@ -1,9 +1,8 @@
 'use server';
 
 import { NextResponse } from "next/server";
-import { User, Session, Device } from "@/database/schemas";
-import { randomBytes } from "crypto";
-import { cookies } from "next/headers";
+import { User, Device } from "@/database/schemas";
+import { createSession } from "./session";
 
 export async function POST(req: Request) {
     // Create a new user
@@ -25,29 +24,8 @@ export async function POST(req: Request) {
         registrationStage: 'passphrase'
     });
 
-    // Create a new session
-    const sessionId = randomBytes(32).toString('base64');
-    const res = await Session.replaceOne({}, {
-        user: newUser._id,
-        sid: sessionId
-    }, {
-        upsert: true
-    });
-
-    newUser.sessions = (res.upsertedId !== null)
-        ? [await Session.findById(res.upsertedId)]
-        : [await Session.findOne({ 'sid': sessionId })];
-
-    await newUser.save();
+    await createSession(newUser._id);
     await newDevice.save();
-
-    cookies().set({
-        name: 'sid',
-        value: sessionId,
-        httpOnly: true,
-        path: '/',
-        sameSite: 'strict'
-    });
 
     return NextResponse.json({
         'deviceId': newDevice._id

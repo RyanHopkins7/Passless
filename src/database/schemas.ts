@@ -7,8 +7,24 @@ export interface IDevice {
     deviceWrappedVaultKey: String,
     _id: Types.ObjectId
 };
-export interface ISession {};
-export interface IUser {};
+export interface ISession {
+    sid: String,
+    user: Types.ObjectId,
+    _id: Types.ObjectId
+};
+export interface IUser {
+    _id: Types.ObjectId,
+    username: String,
+    authenticators: Array<IWebAuthenticator>,
+    devices: Array<IDevice>,
+    sessions: Array<ISession>,
+    registrationStage: String,
+    passphraseHash: Buffer,
+    passphraseHashSalt: String,
+    passphraseHashPepper: Buffer,
+    passphraseKeySalt: String,
+    passphraseWrappedVaultKey: String
+};
 
 const webAuthenticatorSchema = new mongoose.Schema({
     pubKey: String
@@ -43,9 +59,9 @@ const userSchema = new mongoose.Schema({
     devices: [deviceSchema],
     sessions: [sessionSchema],
     registrationStage: String,
-    passphraseHash: String,
+    passphraseHash: Buffer,
     passphraseHashSalt: String,
-    passphraseHashPepper: String,
+    passphraseHashPepper: Buffer,
     passphraseKeySalt: String,
     passphraseWrappedVaultKey: String
 });

@@ -31,9 +31,9 @@ export async function POST(req: Request) {
     await User.findByIdAndUpdate(
         session?.user,
         {
-            passphraseHash: bytesToHex(hash),
+            passphraseHash: Buffer.from(hash),
             passphraseHashSalt: data.passphraseHashSalt,
-            passphraseHashPepper: bytesToHex(pepper),
+            passphraseHashPepper: Buffer.from(pepper),
             passphraseKeySalt: data.passphraseKeySalt,
             passphraseWrappedVaultKey: data.passphraseWrappedVaultKey
         }
