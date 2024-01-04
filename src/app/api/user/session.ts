@@ -8,19 +8,14 @@ export async function createSession(userId: Types.ObjectId): Promise<string> {
     // Return session ID
     const user = await User.findById(userId);
     const sessionId = randomBytes(32).toString('base64');
-    const res = await Session.replaceOne({}, {
-        user: userId,
+    await Session.replaceOne({}, {
+        user: user._id,
         sid: sessionId
     }, {
         upsert: true
     });
 
-    user.sessions.push(
-        (res.upsertedId !== null)
-            ? [await Session.findById(res.upsertedId)]
-            : [await Session.findOne({ 'sid': sessionId })]
-    );
-
+    user.sessionIds.push(sessionId);
     await user.save();
 
     cookies().set({

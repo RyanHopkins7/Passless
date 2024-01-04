@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     });
 
     const hash = argon2id(
-        data.passphraseHash,
+        data.hash,
         user?.passphraseHashPepper,
         // TODO: might want to export the parameters as a constant somewhere
         {
