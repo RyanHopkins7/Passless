@@ -4,14 +4,6 @@ var randomstring = require("randomstring");
 require('dotenv').config();
 var c = require("crypto");
 
-var connection = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    port: process.env.DB_PORT,
-    database: process.env.DB_NAME
-}).promise();
-
 type getSessionReturnType = {
     sessionId: string,
     challenge: string, 
@@ -25,12 +17,20 @@ type getUserDataType = {
     username: string
 }
 
+export var pool = mysql.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    port: process.env.DB_PORT,
+    database: process.env.DB_NAME
+}).promise();
+
 async function createUser (username : string, email : string, recoveryEmail : string, symmKey :  string) : Promise<void> {
     let query : string = `
         INSERT INTO users (email, recovery_email, user_name, symm_key)
         VALUES (?, ?, ?, ?)
     `;
-    await connection.query(query, [email, recoveryEmail, username, symmKey]);
+    await pool.query(query, [email, recoveryEmail, username, symmKey]);
 }
 
 async function updateSession (sessionId : string, challenge : string) : Promise<void> {
@@ -40,7 +40,7 @@ async function updateSession (sessionId : string, challenge : string) : Promise<
         WHERE session_id = ?
     `;
 
-    await connection.query(query, [challenge, sessionId]);
+    await pool.query(query, [challenge, sessionId]);
 }
 
 async function createSession (challenge : string, email : string) : Promise<string> {
@@ -54,7 +54,7 @@ async function createSession (challenge : string, email : string) : Promise<stri
         WHERE (user_id = ? and master_session IS NULL)
         `;
 
-    await connection.query(query, [sessionId, userId]);
+    await pool.query(query, [sessionId, userId]);
 
     let expiration : number = (Date.now() / 1000) + (24*60*60);
 
@@ -64,7 +64,7 @@ async function createSession (challenge : string, email : string) : Promise<stri
         VALUES (?, ?, ?, ?)
     `;
 
-    await connection.query(query, [sessionId, challenge, expiration, userId]);
+    await pool.query(query, [sessionId, challenge, expiration, userId]);
 
     return sessionId;
 }
@@ -78,7 +78,7 @@ async function getSession(sessionId : string) : Promise<getSessionReturnType> {
         LIMIT 1
     `;
 
-    let [session] = await connection.query(query, [sessionId]);
+    let [session] = await pool.query(query, [sessionId]);
 
     // returns all session data as json object
     return session[0];
@@ -90,7 +90,7 @@ async function getUserId(email : string) : Promise<number> {
         WHERE email = ?
     `;
 
-    let [user] = await connection.query(query, [email]);
+    let [user] = await pool.query(query, [email]);
     
     return user[0].user_id;
 }
@@ -101,7 +101,7 @@ async function validateUniqueEmail(email : string) : Promise<boolean> {
         WHERE email = ?
     `;
 
-    let [user] = await connection.query(query, [email]);
+    let [user] = await pool.query(query, [email]);
 
     if(user.length > 0)
         return false;
@@ -118,7 +118,7 @@ async function getUserData(userId : number) : Promise<getUserDataType> {
         LIMIT 1
     `;
 
-    const [userData] = await connection.query(query, [userId]);
+    const [userData] = await pool.query(query, [userId]);
 
     return userData[0];
 }
@@ -131,7 +131,7 @@ async function getPubKey(userId : number) : Promise<string> {
         LIMIT 1
     `;
 
-    const [pubKey] = await connection.query(query, [userId]);
+    const [pubKey] = await pool.query(query, [userId]);
 
     return pubKey[0];
 }
@@ -143,7 +143,7 @@ async function setPubKey(userId : number, pubKey : string) : Promise<void> {
         WHERE user_id = ?
     `;
 
-    await connection.query(query, [pubKey, userId]);
+    await pool.query(query, [pubKey, userId]);
 }
 
 async function setPasswords(userId : number, password : string) : Promise<void> {
@@ -155,7 +155,7 @@ async function setPasswords(userId : number, password : string) : Promise<void> 
         WHERE user_id = ?
         LIMIT 1
     `
-    const [passwords] = await connection.query(query, [userId]);
+    const [passwords] = await pool.query(query, [userId]);
 
     if(passwords.length == 0) {
         // Insert a new initial password
@@ -164,7 +164,7 @@ async function setPasswords(userId : number, password : string) : Promise<void> 
             VALUES (?, ?)
         `;
 
-        await connection.query(query, [password, userId]);
+        await pool.query(query, [password, userId]);
     }
     else {
         // Update existing set of passwords
@@ -174,7 +174,7 @@ async function setPasswords(userId : number, password : string) : Promise<void> 
             WHERE user_id = ?
         `;
 
-        await connection.query(query, [password, userId]);
+        await pool.query(query, [password, userId]);
     }
 
 }
@@ -188,7 +188,7 @@ async function getPasswords(userId : number) : Promise<string> {
         LIMIT 1
     `;
 
-    const [passwords] = await connection.query(query, [userId]);
+    const [passwords] = await pool.query(query, [userId]);
 
     if(passwords.length != 0) {
         return passwords[0];
@@ -197,5 +197,5 @@ async function getPasswords(userId : number) : Promise<string> {
     return "";
 }
 
-module.exports = {createUser, updateSession, createSession, getSession, getUserId, 
+module.exports = {pool, createUser, updateSession, createSession, getSession, getUserId, 
                     getUserData, validateUniqueEmail, getPubKey, setPubKey, setPasswords, getPasswords}
