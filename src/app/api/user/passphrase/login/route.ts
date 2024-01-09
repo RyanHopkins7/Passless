@@ -17,12 +17,12 @@ export async function POST(req: Request) {
     });
 
     const hash = argon2id(
-        data.hash,
+        data.passphraseHash,
         user?.passphraseHashPepper,
         // TODO: might want to export the parameters as a constant somewhere
         {
-            m: 19456,
-            t: 2,
+            m: 12288,
+            t: 3,
             p: 1
         }
     );

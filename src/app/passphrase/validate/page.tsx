@@ -1,17 +1,21 @@
 'use client';
 
 import { hexToBytes, bytesToHex } from "@noble/hashes/utils";
+import { useState } from "react";
 
 export default function ValidatePassphrase() {
+    const [passphrase, setPassphrase] = useState<string[]>(new Array(8).fill(''));
+    const [loading, setLoading] = useState<boolean>(false);
+
     const login = async (
-        username: string, 
+        username: string,
         passphrase: string,
         salt: string
     ) => {
         // Return true if passphrase hash is accepted by server and false otherwise
         // TODO: should generating the hash from passphrase be placed into a function and exported?
         const enc = new TextEncoder();
-    
+
         const keyMaterial = await window.crypto.subtle.importKey(
             'raw',
             enc.encode(passphrase),
@@ -20,12 +24,14 @@ export default function ValidatePassphrase() {
             ['deriveKey']
         );
 
+        // TODO: if user skips to this page before setting passphrase, 
+        // it will cause an error since the salt has not been defined
         const hashKey = await window.crypto.subtle.deriveKey(
             {
                 name: 'PBKDF2',
                 salt: hexToBytes(salt),
-                iterations: 300000,
-                hash: 'SHA-512'
+                iterations: 600000,
+                hash: 'SHA-256'
             },
             keyMaterial,
             // Algorithm doesn't really matter
@@ -49,32 +55,39 @@ export default function ValidatePassphrase() {
             },
             body: JSON.stringify({
                 'username': username,
-                'hash': bytesToHex(hash)
+                'passphraseHash': bytesToHex(hash)
             })
         });
 
-        return res.status == 200;
+        return res.status == 201;
     }
 
     return (
         <main className="flex justify-center">
-            <div className="max-w-xl my-10">
+            <div className="w-xl my-10">
                 <h2 className="text-3xl font-bold mb-5">Enter Passphrase</h2>
                 <p>
                     Please validate your passphrase before proceeding.
                 </p>
-                <form action={async (e: FormData) => {
-                    const res = await fetch('/api/user');
-                    // TODO: allow user to enter username if no session exists!
-                    const { username, salt } = await res.json();
+                <div className="grid grid-cols-4 gap-4 m-5 my-10">
+                    {passphrase.map((w, i) => {
+                        return (
+                            <div key={i} className="bg-light-purple w-30 h-12 px-4 py-3 rounded-md text-center font-bold">
+                                {w}
+                            </div>
+                        );
+                    })}
+                </div>
+                <div className="flex justify-center">
+                    <button className={loading ?
+                        "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-wait" :
+                        "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer"}
+                        onClick={async () => {
 
-                    alert(
-                        await login(username, e.get('passphrase') as string, salt)
-                    );
-                }}>
-                    <input type="text" name="passphrase" required></input>
-                    <input type="submit" value={"Submit"}></input>
-                </form>
+                        }}>
+                        Continue
+                    </button>
+                </div>
             </div>
         </main>
     );

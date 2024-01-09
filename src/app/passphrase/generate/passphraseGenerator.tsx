@@ -120,8 +120,8 @@ export default function PassphraseGenerator() {
                         {
                             name: 'PBKDF2',
                             salt: keySalt,
-                            iterations: 300000,
-                            hash: 'SHA-512'
+                            iterations: 600000,
+                            hash: 'SHA-256'
                         },
                         keyMaterial,
                         { name: 'AES-KW', length: 256 },
@@ -138,8 +138,8 @@ export default function PassphraseGenerator() {
                         {
                             name: 'PBKDF2',
                             salt: hashSalt,
-                            iterations: 300000,
-                            hash: 'SHA-512'
+                            iterations: 600000,
+                            hash: 'SHA-256'
                         },
                         keyMaterial,
                         // Algorithm doesn't really matter
@@ -164,13 +164,13 @@ export default function PassphraseGenerator() {
 
     return (
         <main className="flex justify-center">
-            <div className="max-w-xl my-10">
+            <div className="w-xl my-10">
                 <h2 className="text-3xl font-bold mb-5">Generate Passphrase</h2>
                 <p>
                     You will need your passphrase to access your account in case you lose your devices.
                     Please write it down and store it somewhere you won't lose it.
                 </p>
-                <div className="grid grid-cols-4 gap-4 m-5 my-10">
+                <div className="grid grid-cols-4 gap-4 m-5 my-10 w-full">
                     {passphrase.map((w, i) => {
                         return (<div key={i} className="bg-light-purple w-30 h-12 px-4 py-3 rounded-md text-center font-bold">{w}</div>);
                     })}
