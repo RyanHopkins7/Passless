@@ -1,7 +1,7 @@
 'use client';
 
 import { hexToBytes, bytesToHex } from "@noble/hashes/utils";
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 
 export default function ValidatePassphrase() {
     const [passphrase, setPassphrase] = useState<string[]>(new Array(8).fill(''));
@@ -72,8 +72,20 @@ export default function ValidatePassphrase() {
                 <div className="grid grid-cols-4 gap-4 m-5 my-10">
                     {passphrase.map((w, i) => {
                         return (
-                            <div key={i} className="bg-light-purple w-30 h-12 px-4 py-3 rounded-md text-center font-bold">
-                                {w}
+                            <div key={i} className="bg-light-purple w-30 h-12 px-4 py-3 rounded-md text-center font-bold cursor-text"
+                                onClick={() => {
+                                    document.getElementById(`passphraseWord${i}`)?.focus();
+                                }}>
+                                <input
+                                    type="text"
+                                    id={`passphraseWord${i}`}
+                                    className="max-w-full bg-transparent outline-none"
+                                    onInput={(e: FormEvent<HTMLInputElement>) => {
+                                        setPassphrase((pass) => {
+                                            pass[i] = (e.target as HTMLInputElement).value;
+                                            return pass;
+                                        });
+                                    }}></input>
                             </div>
                         );
                     })}
@@ -83,7 +95,12 @@ export default function ValidatePassphrase() {
                         "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-wait" :
                         "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer"}
                         onClick={async () => {
+                            setLoading(true);
+                            const userData = await (await fetch('/api/user')).json();
+                            const res = await login(userData.username, passphrase.join('-'), userData.salt);
 
+                            alert(res);
+                            setLoading(false);
                         }}>
                         Continue
                     </button>

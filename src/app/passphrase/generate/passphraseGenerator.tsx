@@ -93,8 +93,8 @@ export default function PassphraseGenerator() {
         // We want to prevent user interaction until key generation is complete
         setLoading(true);
 
-        const passString = passphrase.join('');
-        if (passString !== '') {
+        const passString = passphrase.join('-');
+        if (passString !== '-------') {
             const enc = new TextEncoder();
 
             const keySalt = new Uint8Array(16);

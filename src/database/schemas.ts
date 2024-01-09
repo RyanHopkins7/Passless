@@ -19,6 +19,8 @@ export interface IUser {
     devices: Array<IDevice>,
     sessionIds: Array<String>,
     registrationStage: String,
+    // TODO: could be better to use the PHC string format
+    // https://github.com/P-H-C/phc-string-format/blob/master/phc-sf-spec.md
     passphraseHash: Buffer,
     passphraseHashSalt: String,
     passphraseHashPepper: Buffer,
