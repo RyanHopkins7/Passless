@@ -29,6 +29,10 @@ p, a, h1, h2, h3, h4, h5, h6 {
     background-color: #CAC2F9;
 }
 
+.border-medium-purple {
+    border-color: #CAC2F9;
+}
+
 .dark-purple-dashed-border {
     border: 3px dashed #8680DF;
 }

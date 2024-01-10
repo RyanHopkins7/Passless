@@ -70,7 +70,7 @@ export default function ValidatePassphrase() {
                     Please validate your passphrase before proceeding.
                 </p>
                 <div className="grid grid-cols-4 gap-4 m-5 my-10">
-                    {passphrase.map((w, i) => {
+                    {passphrase.map((_, i) => {
                         return (
                             <div key={i} className="bg-light-purple w-30 h-12 px-4 py-3 rounded-md text-center font-bold cursor-text"
                                 onClick={() => {
@@ -79,7 +79,8 @@ export default function ValidatePassphrase() {
                                 <input
                                     type="text"
                                     id={`passphraseWord${i}`}
-                                    className="max-w-full bg-transparent outline-none"
+                                    className="max-w-full bg-transparent outline-none focus:border-b-2 border-medium-purple"
+                                    autoFocus={i === 0}
                                     onInput={(e: FormEvent<HTMLInputElement>) => {
                                         setPassphrase((pass) => {
                                             pass[i] = (e.target as HTMLInputElement).value;
