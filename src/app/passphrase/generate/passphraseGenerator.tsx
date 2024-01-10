@@ -94,7 +94,7 @@ export default function PassphraseGenerator() {
         setLoading(true);
 
         const passString = passphrase.join('-');
-        if (passString !== '-------') {
+        if (passphrase.some((w) => w === '')) {
             const enc = new TextEncoder();
 
             const keySalt = new Uint8Array(16);
