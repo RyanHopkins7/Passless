@@ -39,6 +39,10 @@ export async function POST(req: Request) {
         }
     );
 
+    // Log out user to force them to re-enter their passphrase
+    await Session.findOneAndDelete({ sid: sid });
+    cookies().delete('sid');
+
     return NextResponse.json({}, {
         status: 201
     });

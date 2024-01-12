@@ -63,6 +63,10 @@ export default function ValidatePassphrase() {
         return res.status == 201;
     }
 
+    const genKey = async (pass: string): Promise<CryptoKey> {
+        
+    }
+
     return (
         <main className="flex justify-center">
             <div className="w-xl my-10">
@@ -108,7 +112,7 @@ export default function ValidatePassphrase() {
                                 setLoading(false);
 
                                 if (res) {
-                                    window.location.replace('/passkeys');
+                                    window.location.replace('/vault');
                                 } else {
                                     setError('Passphrase is not correct')
                                 }
