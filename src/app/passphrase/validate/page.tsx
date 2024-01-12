@@ -6,6 +6,7 @@ import { FormEvent, useState } from "react";
 export default function ValidatePassphrase() {
     const [passphrase, setPassphrase] = useState<string[]>(new Array(8).fill(''));
     const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string>('');
 
     const login = async (
         username: string,
@@ -83,7 +84,7 @@ export default function ValidatePassphrase() {
                                     autoFocus={i === 0}
                                     onInput={(e: FormEvent<HTMLInputElement>) => {
                                         setPassphrase((pass) => {
-                                            pass[i] = (e.target as HTMLInputElement).value;
+                                            pass[i] = (e.target as HTMLInputElement).value.toLowerCase();
                                             return pass;
                                         });
                                     }}></input>
@@ -96,15 +97,28 @@ export default function ValidatePassphrase() {
                         "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-wait" :
                         "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer"}
                         onClick={async () => {
-                            setLoading(true);
-                            const userData = await (await fetch('/api/user')).json();
-                            const res = await login(userData.username, passphrase.join('-'), userData.salt);
+                            if (passphrase.some((w) => w === '')) {
+                                setError('Please completely fill in your passphrase')
+                            } else {
+                                setLoading(true);
+                                const userData = await (await fetch('/api/user')).json();
+                                const res = await login(userData.username, passphrase.join('-'), userData.salt);
 
-                            alert(res);
-                            setLoading(false);
+                                alert(res);
+                                setLoading(false);
+
+                                if (res) {
+                                    window.location.replace('/passkeys');
+                                } else {
+                                    setError('Passphrase is not correct')
+                                }
+                            }
                         }}>
                         Continue
                     </button>
+                </div>
+                <div className="flex justify-center">
+                    <p className="text-red-500">{error}</p>
                 </div>
             </div>
         </main>

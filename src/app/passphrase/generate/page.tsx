@@ -12,8 +12,10 @@ export default async function GenPassphrase() {
     });
     const user = await User.findById(session?.user);
 
-    // TODO: also allow resetting passphrase 
-    if (!user || user.registrationStage !== 'passphrase') {
+    // Prevent setting passphrase unless the user is registering
+    // or has requested a passphrase reset and successfully authenticated
+    // TODO: should a timeout be set for user.passphraseResetAllowed?
+    if (!user || !user.passphraseResetAllowed) {
         redirect('/');
     }
 

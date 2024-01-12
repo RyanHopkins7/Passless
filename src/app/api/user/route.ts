@@ -41,7 +41,7 @@ export async function POST(req: Request) {
         devices: [newDevice],
         sessions: [],
         authenticators: [],
-        registrationStage: 'passphrase'
+        passphraseResetAllowed: true
     });
 
     await newUser.save();

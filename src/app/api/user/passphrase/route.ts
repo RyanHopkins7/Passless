@@ -34,7 +34,8 @@ export async function POST(req: Request) {
             passphraseHashSalt: data.passphraseHashSalt,
             passphraseHashPepper: Buffer.from(pepper),
             passphraseKeySalt: data.passphraseKeySalt,
-            passphraseWrappedVaultKey: data.passphraseWrappedVaultKey
+            passphraseWrappedVaultKey: data.passphraseWrappedVaultKey,
+            passphraseResetAllowed: false
         }
     );
 

@@ -18,7 +18,7 @@ export interface IUser {
     authenticators: Array<IWebAuthenticator>,
     devices: Array<IDevice>,
     sessionIds: Array<String>,
-    registrationStage: String,
+    passphraseResetAllowed: Boolean,
     // TODO: could be better to use the PHC string format
     // https://github.com/P-H-C/phc-string-format/blob/master/phc-sf-spec.md
     passphraseHash: Buffer,
@@ -60,7 +60,7 @@ const userSchema = new mongoose.Schema({
     authenticators: [webAuthenticatorSchema],
     devices: [deviceSchema],
     sessionIds: [String],
-    registrationStage: String,
+    passphraseResetAllowed: Boolean,
     passphraseHash: Buffer,
     passphraseHashSalt: String,
     passphraseHashPepper: Buffer,
