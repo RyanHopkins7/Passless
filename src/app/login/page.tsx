@@ -3,9 +3,9 @@
 import { hexToBytes, bytesToHex } from "@noble/hashes/utils";
 import { FormEvent, useState } from "react";
 
-export default function ValidatePassphrase() {
+export default function LogIn() {
     const [username, setUsername] = useState<string>('');
-    const [passphrase, setPassphrase] = useState<string[]>(new Array(8).fill(''));
+    const [passphrase, setPassphrase] = useState<string[]>(new Array(6).fill(''));
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>('');
 
@@ -80,7 +80,7 @@ export default function ValidatePassphrase() {
                 <input required type="text" name="username" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Enter username"></input>
                 
                 <h3 className="text-xl font-medium mb-5">Enter Passphrase</h3>
-                <div className="grid grid-cols-4 gap-4 m-5 my-5">
+                <div className="grid grid-cols-3 gap-4 m-5 my-5">
                     {passphrase.map((_, i) => {
                         return (
                             <div key={i} className="bg-light-purple w-30 h-12 px-4 py-3 rounded-md text-center font-bold cursor-text"

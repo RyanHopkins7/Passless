@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { bytesToHex } from '@noble/hashes/utils';
+import Link from 'next/link';
 
 export default function Home() {
-    const [usernameConflict, setUsernameConflict] = useState<string>();
     const [loading, setLoading] = useState<boolean>(false);
 
     const registerUser = async (d: FormData) => {
+        // TODO: move all this stuff to the /register page
         setLoading(true);
 
         // Generate vault encryption key
@@ -51,41 +52,42 @@ export default function Home() {
             })
         });
 
-        if (res.status == 409) {
-            setUsernameConflict(`User with username ${d.get('username')} already exists.`);
-            setLoading(false);
-        } else {
-            // Save device id to allow looking up wrapped vault key later
-            const resJson = await res.json();
-            window.localStorage.setItem('deviceId', resJson.deviceId);
+        // Save device id to allow looking up wrapped vault key later
+        const resJson = await res.json();
+        window.localStorage.setItem('deviceId', resJson.deviceId);
 
-            // Save device key encryption key in browser
-            window.localStorage.setItem(
-                'deviceKey',
-                JSON.stringify(
-                    await window.crypto.subtle.exportKey('jwk', deviceKey)
-                )
-            );
+        // Save device key encryption key in browser
+        window.localStorage.setItem(
+            'deviceKey',
+            JSON.stringify(
+                await window.crypto.subtle.exportKey('jwk', deviceKey)
+            )
+        );
 
-            window.location.replace('/passphrase/generate');
-        }
+        window.location.replace('/register');
     };
 
     return (
         <main className="flex justify-center">
             <div className="max-w-md my-10">
                 <h2 className="text-3xl font-bold mb-10">Share private files and data on the web, no password required.</h2>
-                <form action={registerUser}>
-                    <input required type="text" name="username" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Enter username"></input>
-
-                    <input type="submit" className={
-                        loading
-                            ? "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-wait"
-                            : "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer"
-                    } value={"Create an Account"}></input>
-                </form>
-                <a className="cursor-pointer hover:underline">Sign in to an Existing Account</a>
-                <p className="text-red-500">{usernameConflict}</p>
+                <div className="flex justify-center">
+                    <Link
+                        href="/register"
+                        className="block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold text-center"
+                    >
+                        Create an Account
+                    </Link>
+                </div>
+                {/* TODO: style this button differently */}
+                <div className="flex justify-center">
+                    <Link
+                        href="/login"
+                        className="block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold text-center"
+                    >
+                        Sign in to an Existing Account
+                    </Link>
+                </div>
             </div>
         </main>
     )

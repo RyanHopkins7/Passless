@@ -3,16 +3,17 @@
 import { useEffect, useState } from 'react';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 
-export default function PassphraseGenerator() {
+export default function Register() {
     const [vaultKey, setVaultKey] = useState<CryptoKey>();
     const [wordList, setWordList] = useState<string[]>([]);
-    const [passphrase, setPassphrase] = useState<string[]>(new Array(8).fill(''));
+    const [passphrase, setPassphrase] = useState<string[]>(new Array(6).fill(''));
     const [passphraseKey, setPassphraseKey] = useState<CryptoKey>();
     const [passphraseKeySalt, setPassphraseKeySalt] = useState<Uint8Array>();
     const [passphraseHash, setPassphraseHash] = useState<Uint8Array>();
     const [passphraseHashSalt, setPassphraseHashSalt] = useState<Uint8Array>();
     const [loading, setLoading] = useState<boolean>(true);
 
+    // TODO: this is wrong now!!!
     // General order of operations
     // 1. Get device wrapped vault key from server
     // 2. Decrypt wrapped vault encryption secret
@@ -23,7 +24,7 @@ export default function PassphraseGenerator() {
     // 7. Send passphrase hash and wrapped vault encryption secrets to server
 
     const genRandPassphrase = (words: string[]) => {
-        const pass = new Array(8).fill('');
+        const pass = new Array(6).fill('');
         const rand = () => {
             const arr = new Uint32Array(1);
             window.crypto.getRandomValues(arr);
@@ -170,7 +171,7 @@ export default function PassphraseGenerator() {
                     You will need your passphrase to access your account in case you lose your devices.
                     Please write it down and store it somewhere you won't lose it.
                 </p>
-                <div className="grid grid-cols-4 gap-4 m-5 my-10 w-full">
+                <div className="grid grid-cols-3 gap-4 m-5 my-10 w-full">
                     {passphrase.map((w, i) => {
                         return (<div key={i} className="bg-light-purple w-30 h-12 px-4 py-3 rounded-md text-center font-bold">{w}</div>);
                     })}
