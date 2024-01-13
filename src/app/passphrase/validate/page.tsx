@@ -4,6 +4,7 @@ import { hexToBytes, bytesToHex } from "@noble/hashes/utils";
 import { FormEvent, useState } from "react";
 
 export default function ValidatePassphrase() {
+    const [username, setUsername] = useState<string>('');
     const [passphrase, setPassphrase] = useState<string[]>(new Array(8).fill(''));
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>('');
@@ -60,21 +61,26 @@ export default function ValidatePassphrase() {
             })
         });
 
-        return res.status == 201;
+        return res.status === 201;
     }
 
-    const genKey = async (pass: string): Promise<CryptoKey> {
+    // const genKey = async (pass: string): Promise<CryptoKey> {
         
-    }
+    // }
 
     return (
         <main className="flex justify-center">
             <div className="w-xl my-10">
-                <h2 className="text-3xl font-bold mb-5">Enter Passphrase</h2>
+                <h2 className="text-3xl font-bold mb-5">Validate Username and Passphrase</h2>
                 <p>
-                    Please validate your passphrase before proceeding.
+                    Please validate your username and passphrase before proceeding.
                 </p>
-                <div className="grid grid-cols-4 gap-4 m-5 my-10">
+
+                <h3 className="text-xl font-medium my-5">Enter Username</h3>
+                <input required type="text" name="username" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Enter username"></input>
+                
+                <h3 className="text-xl font-medium mb-5">Enter Passphrase</h3>
+                <div className="grid grid-cols-4 gap-4 m-5 my-5">
                     {passphrase.map((_, i) => {
                         return (
                             <div key={i} className="bg-light-purple w-30 h-12 px-4 py-3 rounded-md text-center font-bold cursor-text"
@@ -112,7 +118,11 @@ export default function ValidatePassphrase() {
                                 setLoading(false);
 
                                 if (res) {
-                                    window.location.replace('/vault');
+                                    // TODO: generate key from passphrase
+                                    // unwrap vault key
+                                    // generate & save new device key if necessary
+                                    // window.location.replace('/vault');
+                                    alert('success!');
                                 } else {
                                     setError('Passphrase is not correct')
                                 }

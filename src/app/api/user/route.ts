@@ -11,6 +11,8 @@ export async function POST(req: Request) {
 
     if (user !== null) {
         // Username is already taken
+        // TODO: this allows username enumeration
+        // this could be prevented by generating usernames randomly
         return NextResponse.json({}, {
             status: 409
         });
