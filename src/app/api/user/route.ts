@@ -44,7 +44,8 @@ export async function POST(req: Request) {
     await createSession(newUser._id);
 
     return NextResponse.json({
-        'username': username
+        'username': username,
+        'deviceId': newDevice._id
     }, {
         status: 201
     });

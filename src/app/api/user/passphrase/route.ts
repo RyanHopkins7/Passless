@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { Session, User } from "@/database/schemas";
 import { argon2id } from "@noble/hashes/argon2";
+import { argon2idParams } from "./params";
 import { randomBytes } from "crypto";
 
 export async function POST(req: Request) {
@@ -21,16 +22,10 @@ export async function POST(req: Request) {
 
     // Re-hash passphrase from client
     const salt = new Uint8Array(randomBytes(16));
-    // Parameters from OWASP recommendations
-    // https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#argon2id
     const hash = argon2id(
         data.passphraseHash,
         salt,
-        {
-            m: 12288,
-            t: 3,
-            p: 1
-        }
+        argon2idParams
     );
 
     // TODO: it may be more modular to use the PHC string format
