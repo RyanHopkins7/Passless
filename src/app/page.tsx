@@ -71,7 +71,7 @@ export default function Home() {
 		<main className="flex justify-center">
 			<div className="max-w-md my-10">
 				<h2 className="text-3xl font-bold mb-10">One Step Towards a Future Without Passwords.</h2>
-				<form id="authentication-form" onSubmit={register ? registerUser : authenticateUser}>
+				<form onSubmit={register ? registerUser : authenticateUser}>
 					{ register && <input required type="text" name="name" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Full Name" onChange={
 						(e) => setUsername(e.target.value)
 					}></input> }
@@ -82,7 +82,7 @@ export default function Home() {
 
 					<input type="submit" className="block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer" value={register ? "Create an Account" : "Log In"}></input>
 				</form>
-				<a id="swap-form" className="cursor-pointer hover:underline" onClick={(e) => setRegister(!register)}>{register ? "Sign in to an Existing Account" : "Create an Account"}</a>
+				<a className="cursor-pointer hover:underline" onClick={(e) => setRegister(!register)}>{register ? "Sign in to an Existing Account" : "Create an Account"}</a>
 			</div>
 		</main>
 	)

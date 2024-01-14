@@ -14,8 +14,7 @@ export async function POST(req: NextRequest) {
     const sessionData = await getSession(sid);
     // console.log(sessionData);
     const userData = await getUserData(sessionData.user_id);
-    console.log('User email: ' + userData.email);
-    console.log('User id: ' + userData.user_id);
+    // console.log(userData);
 
     return NextResponse.json({
         rp: regOpts.rp,

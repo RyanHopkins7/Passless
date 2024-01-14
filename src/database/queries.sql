@@ -16,12 +16,12 @@ CREATE TABLE IF NOT EXISTS users(
 -- User_id refers to the user the passwords belong to
 CREATE TABLE IF NOT EXISTS passwords(
     json LONGTEXT NOT NULL,
-    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE
+    user_id INT NOT NULL REFERENCES users(user_id)
 );
 
 CREATE TABLE IF NOT EXISTS sessions(
     session_id VARCHAR(255) NOT NULL PRIMARY KEY,
     challenge VARCHAR(255),
     expiration BIGINT(20),
-    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE
+    user_id INT NOT NULL REFERENCES users(user_id)
 );
