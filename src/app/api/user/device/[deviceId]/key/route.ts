@@ -1,6 +1,6 @@
 'use server';
 
-import { IDevice } from "@/database/schemas";
+import { IDevice } from "../../../../../../database/schemas";
 import { NextResponse } from "next/server";
 import { getUserFromSession } from "../../../../../session";
 

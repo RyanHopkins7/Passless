@@ -1,7 +1,7 @@
 'use server';
 
 import { NextResponse } from "next/server";
-import { User } from "@/database/schemas";
+import { User } from "../../../../database/schemas";
 import { argon2id } from "@noble/hashes/argon2";
 import { argon2idParams } from "./params";
 import { randomBytes } from "crypto";
