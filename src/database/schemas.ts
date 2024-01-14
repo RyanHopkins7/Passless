@@ -12,12 +12,17 @@ export interface ISession {
     user: Types.ObjectId,
     _id: Types.ObjectId
 };
+export interface IFile {
+    _id: Types.ObjectId,
+    data: String
+}
 export interface IUser {
     _id: Types.ObjectId,
     username: String,
     authenticators: Array<IWebAuthenticator>,
     devices: Array<IDevice>,
     sessionIds: Array<String>,
+    file: IFile,
     passphraseResetAllowed: Boolean,
     // TODO: could be better to use the PHC string format
     // https://github.com/P-H-C/phc-string-format/blob/master/phc-sf-spec.md
@@ -49,6 +54,10 @@ const sessionSchema = new mongoose.Schema({
     }
 });
 
+const fileSchema = new mongoose.Schema({
+    data: String
+});
+
 const userSchema = new mongoose.Schema({
     username: {
         type: String,
@@ -58,6 +67,7 @@ const userSchema = new mongoose.Schema({
     },
     authenticators: [webAuthenticatorSchema],
     devices: [deviceSchema],
+    file: fileSchema,
     sessionIds: [String],
     passphraseResetAllowed: Boolean,
     passphraseHash: Buffer,
@@ -69,4 +79,5 @@ const userSchema = new mongoose.Schema({
 export const WebAuthenticator = mongoose.models.WebAuthenticator || mongoose.model('WebAuthenticator', webAuthenticatorSchema);
 export const Session = mongoose.models.Session || mongoose.model('Session', sessionSchema);
 export const Device = mongoose.models.Device || mongoose.model('Device', deviceSchema);
+export const File = mongoose.models.File || mongoose.model('File', fileSchema);
 export const User = mongoose.models.User || mongoose.model('User', userSchema);

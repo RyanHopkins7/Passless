@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { hexToBytes } from "@noble/hashes/utils";
+import { hexToBytes, randomBytes } from "@noble/hashes/utils";
+import { Buffer } from "buffer";
 
 export default function FileVault() {
     const [vaultKey, setVaultKey] = useState<CryptoKey>();
+    const [fileData, setFileData] = useState<string>();
 
     useEffect(() => {
         const deviceId = window.localStorage.getItem('deviceId');
@@ -48,6 +50,45 @@ export default function FileVault() {
     }, []);
 
     return (
-        <main></main>
+        <main>
+            <p>Upload a file</p>
+            <input type="file" onChange={async (e) => {
+                if (e.target.files?.length == 1) {
+                    const file = e.target.files[0];
+                    const fileObj = {
+                        name: file.name,
+                        type: file.type,
+                        lastModified: file.lastModified,
+                        data: Buffer.from(
+                            await file.arrayBuffer()
+                        ).toString('base64')
+                    };
+
+                    setFileData(JSON.stringify(fileObj));
+                }
+            }}></input>
+            <button className="hover:underline" onClick={async () => {
+                if (
+                    vaultKey !== undefined
+                    && fileData !== null
+                ) {
+                    const enc = new TextEncoder();
+                    const iv = randomBytes(16);
+                    const fileCt = await window.crypto.subtle.encrypt(
+                        {
+                            name: 'AES-GCM',
+                            iv: iv
+                        },
+                        vaultKey,
+                        enc.encode(fileData)
+                    );
+
+                    console.log(Buffer.from(fileCt).toString('base64'));
+                }
+            }}>Submit</button>
+
+            <p>Download the file that you've uploaded</p>
+            <button className="hover:underline">Download file</button>
+        </main>
     );
 }
