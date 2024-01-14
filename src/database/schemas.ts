@@ -22,7 +22,7 @@ export interface IUser {
     // TODO: could be better to use the PHC string format
     // https://github.com/P-H-C/phc-string-format/blob/master/phc-sf-spec.md
     passphraseHash: Buffer,
-    passphraseHashSalt: String,
+    passphraseHashSalt: Buffer,
     passphraseKeySalt: String,
     passphraseWrappedVaultKey: String
 };
@@ -61,7 +61,7 @@ const userSchema = new mongoose.Schema({
     sessionIds: [String],
     passphraseResetAllowed: Boolean,
     passphraseHash: Buffer,
-    passphraseHashSalt: String,
+    passphraseHashSalt: Buffer,
     passphraseKeySalt: String,
     passphraseWrappedVaultKey: String
 });

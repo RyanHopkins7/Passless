@@ -83,7 +83,7 @@ export default function Home() {
                 <div className="flex justify-center">
                     <Link
                         href="/login"
-                        className="block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold text-center"
+                        className="block button bg-dark-purple secondary m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold text-center"
                     >
                         Sign in to an Existing Account
                     </Link>
