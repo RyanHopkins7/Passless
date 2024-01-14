@@ -18,6 +18,6 @@ export async function GET(req: Request, context: { params: { deviceId: string } 
     }
 
     return NextResponse.json({
-        'key': res[0].deviceWrappedVaultKey
+        'key': res[0].wrappedVaultKey
     });
 }

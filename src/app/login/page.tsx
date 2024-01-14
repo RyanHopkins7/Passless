@@ -14,6 +14,7 @@ export default function LogIn() {
     const [passphrase, setPassphrase] = useState<string[]>(new Array(6).fill(''));
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>('');
+    const [selectedWord, setSelectedWord] = useState<number>(-1);
 
     const login = async (
         username: string,
@@ -88,7 +89,9 @@ export default function LogIn() {
                 ></input>
 
                 <h3 className="text-xl font-medium mb-5">Enter Passphrase</h3>
-                <div className="grid grid-cols-3 gap-4 m-5 my-5">
+                <div
+                    className="grid grid-cols-3 gap-4 m-5 my-5"
+                    onBlur={() => { setSelectedWord(-1) }}>
                     {passphrase.map((_, i) => {
                         return (
                             <div key={i} className="bg-light-purple w-30 h-12 px-4 py-3 rounded-md text-center font-bold cursor-text"
@@ -96,7 +99,10 @@ export default function LogIn() {
                                     document.getElementById(`passphraseWord${i}`)?.focus();
                                 }}>
                                 <input
-                                    type="text"
+                                    type={
+                                        (selectedWord === i) ? "text" : "password"
+                                    }
+                                    onFocus={() => { setSelectedWord(i) }}
                                     id={`passphraseWord${i}`}
                                     className="max-w-full bg-transparent outline-none focus:border-b-2 border-medium-purple"
                                     placeholder={"Enter word " + (i + 1)}
