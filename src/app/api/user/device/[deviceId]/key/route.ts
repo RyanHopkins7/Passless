@@ -1,14 +1,12 @@
 'use server';
 
-import { IDevice, Session, User } from "@/database/schemas";
-import { cookies } from "next/headers";
+import { IDevice } from "@/database/schemas";
 import { NextResponse } from "next/server";
+import { getUserFromSession } from "../../../../../session";
 
-export async function GET(req: Request, context: { params: { deviceId: string } }) {
+export async function GET(_: Request, context: { params: { deviceId: string } }) {
     // Return deviceWrappedVaultKey if session and deviceId are valid
-    const sid = cookies().get('sid')?.value;
-    const session = await Session.findOne({ sid: sid });
-    const user = await User.findById(session?.user);
+    const user = await getUserFromSession();
     const res = user?.devices.filter(
         (device: IDevice) => device._id.equals(context.params.deviceId)
     ) || [];

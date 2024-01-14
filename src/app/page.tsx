@@ -1,18 +1,16 @@
 'use server';
 
 import Link from 'next/link';
-import { cookies } from 'next/headers';
-import { Session } from '@/database/schemas';
+import { getUserFromSession } from './session';
 
 export default async function Home() {
-    const sid = cookies().get('sid')?.value;
-    const session = await Session.findOne({ sid: sid });
+    const user = await getUserFromSession();
 
     return (
         <main className="flex justify-center">
             <div className="max-w-md my-10">
                 <h2 className="text-3xl font-bold mb-10">Save private files and data on the web, no password required.</h2>
-                {session === null
+                {(user === null || user.passphraseHash === undefined)
                     ? (
                         <div>
                             <div className="flex justify-center">

@@ -4,7 +4,7 @@ import { readFileSync } from "fs";
 import { NextResponse } from "next/server";
 import { randomInt } from "crypto";
 import { User } from "@/database/schemas";
-import { createSession } from "./session";
+import { createSession } from "../../session";
 
 async function getAvailableUsername(wordlist: Array<string>): Promise<string> {
     while (true) {

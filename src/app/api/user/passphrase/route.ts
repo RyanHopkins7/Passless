@@ -1,18 +1,16 @@
 'use server';
 
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { Session, User } from "@/database/schemas";
+import { User } from "@/database/schemas";
 import { argon2id } from "@noble/hashes/argon2";
 import { argon2idParams } from "./params";
 import { randomBytes } from "crypto";
+import { getUserFromSession, destroySession } from "../../../session";
 
 export async function POST(req: Request) {
     // Save passphrase data to user
     const data = await req.json();
-    const sid = cookies().get('sid')?.value;
-    const session = await Session.findOne({ sid: sid });
-    const user = await User.findById(session?.user);
+    const user = await getUserFromSession();
 
     if (!user?.passphraseResetAllowed) {
         return NextResponse.json({}, {
@@ -31,7 +29,7 @@ export async function POST(req: Request) {
     // TODO: it may be more modular to use the PHC string format
     // https://github.com/P-H-C/phc-string-format/blob/master/phc-sf-spec.md
     await User.findByIdAndUpdate(
-        session?.user,
+        user._id,
         {
             passphraseHash: Buffer.from(hash),
             passphraseHashSalt: salt,
@@ -42,8 +40,7 @@ export async function POST(req: Request) {
     );
 
     // Log out user to force them to re-enter passphrase
-    await Session.findOneAndDelete({ sid: sid });
-    cookies().delete('sid');
+    await destroySession();
 
     return NextResponse.json({}, {
         status: 201

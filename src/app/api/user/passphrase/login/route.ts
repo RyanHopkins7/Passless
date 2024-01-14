@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { argon2id } from "@noble/hashes/argon2";
 import { argon2idParams } from "../params";
 import { timingSafeEqual } from "crypto";
-import { createSession } from "../../session";
+import { createSession } from "../../../../session";
 import { randomBytes } from "crypto";
 
 export async function POST(req: Request) {

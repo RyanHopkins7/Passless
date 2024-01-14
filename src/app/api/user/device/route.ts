@@ -1,15 +1,13 @@
 'use server';
 
-import { cookies } from "next/headers";
-import { Session, User, Device } from "@/database/schemas";
+import { Device, User } from "@/database/schemas";
 import { NextResponse } from "next/server";
+import { getUserFromSession } from "../../../session";
 
 export async function POST(req: Request) {
     // Create a new device and attach to user
     const data = await req.json();
-    const sid = cookies().get('sid')?.value;
-    const session = await Session.findOne({ sid: sid });
-    const user = await User.findById(session?.user);
+    const user = await getUserFromSession();
 
     if (user === null) {
         return NextResponse.json({}, {
@@ -20,8 +18,9 @@ export async function POST(req: Request) {
     const newDevice = new Device({ wrappedVaultKey: data.wrappedVaultKey });
     await newDevice.save();
 
-    user.devices.push(newDevice);
-    await user.save();
+    const userModel = await User.findById(user._id);
+    userModel.devices.push(newDevice);
+    await userModel.save();
 
     return NextResponse.json({
         // TODO: could it be better to use UUID?

@@ -1,15 +1,13 @@
 'use server';
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { Session } from "@/database/schemas";
 import LoginForm from "./loginForm";
+import { getUserFromSession } from "../session";
 
 export default async function Login() {
-    const sid = cookies().get('sid')?.value;
-    const session = await Session.findOne({ sid: sid });
+    const user = await getUserFromSession();
 
-    if (session !== null) {
+    if (user !== null && user.passphraseHash !== undefined) {
         redirect('/vault');
     }
 
