@@ -1,6 +1,6 @@
 'use server';
 
-import { User } from "@/database/schemas";
+import { User } from "../../../../../database/schemas";
 import { NextResponse } from "next/server";
 import { argon2id } from "@noble/hashes/argon2";
 import { argon2idParams } from "../params";

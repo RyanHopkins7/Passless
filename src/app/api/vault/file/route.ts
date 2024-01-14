@@ -1,8 +1,8 @@
 'use server';
 
-import { getUserFromSession } from "@/app/session";
+import { getUserFromSession } from "../../../session";
 import { NextResponse } from "next/server";
-import { File, User } from "@/database/schemas";
+import { File, User } from "../../../../database/schemas";
 
 export async function GET() {
     // Retrieve file
