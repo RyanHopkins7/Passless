@@ -87,7 +87,7 @@ export default function RegisterForm() {
                 <h2 className="text-3xl font-bold mb-5">Generate Username and Passphrase</h2>
                 <p>
                     You will need your username and passphrase to access your account.
-                    Please write them down and don't lose them.
+                    Please write them down and don&apos;t lose them.
                 </p>
 
                 <h3 className="text-xl font-medium my-5">Generate Username</h3>

@@ -108,7 +108,7 @@ export default function FileVault() {
 
                 <div>
                     <h3 className="text-xl font-medium my-5">
-                        Download the file that you've uploaded
+                        Download the file that you&apos;ve uploaded
                     </h3>
                     <div className="flex justify-center">
                         <button
