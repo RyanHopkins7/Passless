@@ -14,7 +14,8 @@ export interface ISession {
 };
 export interface IFile {
     _id: Types.ObjectId,
-    data: String
+    data: String,
+    iv: String
 }
 export interface IUser {
     _id: Types.ObjectId,
@@ -55,7 +56,8 @@ const sessionSchema = new mongoose.Schema({
 });
 
 const fileSchema = new mongoose.Schema({
-    data: String
+    data: String,
+    iv: String
 });
 
 const userSchema = new mongoose.Schema({

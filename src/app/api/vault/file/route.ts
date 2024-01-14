@@ -21,7 +21,8 @@ export async function GET() {
     }
 
     return NextResponse.json({
-        'data': user.file.data
+        'data': user.file.data,
+        'iv': user.file.iv
     });
 }
 
@@ -37,7 +38,8 @@ export async function POST(req: Request) {
     }
 
     const newFile = new File({
-        data: reqJson.data
+        data: reqJson.data,
+        iv: reqJson.iv
     });
 
     await newFile.save();

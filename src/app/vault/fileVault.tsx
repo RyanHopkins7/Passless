@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { hexToBytes, randomBytes } from "@noble/hashes/utils";
+import { hexToBytes, bytesToHex, randomBytes } from "@noble/hashes/utils";
 import { Buffer } from "buffer";
 
 export default function FileVault() {
@@ -58,7 +58,6 @@ export default function FileVault() {
                     const fileObj = {
                         name: file.name,
                         type: file.type,
-                        lastModified: file.lastModified,
                         data: Buffer.from(
                             await file.arrayBuffer()
                         ).toString('base64')
@@ -83,12 +82,68 @@ export default function FileVault() {
                         enc.encode(fileData)
                     );
 
-                    console.log(Buffer.from(fileCt).toString('base64'));
+                    const res = await fetch('/api/vault/file', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            data: Buffer.from(fileCt).toString('base64'),
+                            iv: bytesToHex(iv)
+                        })
+                    });
+
+                    if (res.status === 201) {
+                        alert('File upload successful');
+                    } else {
+                        alert('Error: file upload was not successful');
+                    }
                 }
             }}>Submit</button>
 
             <p>Download the file that you've uploaded</p>
-            <button className="hover:underline">Download file</button>
-        </main>
+            <button className="hover:underline" onClick={async () => {
+                if (vaultKey !== undefined) {
+                    const res = await fetch('/api/vault/file');
+
+                    if (res.status === 404) {
+                        alert('Error: you must upload a file first');
+                    } else if (res.status !== 200) {
+                        alert('Error: file download was not successful');
+                    } else {
+                        const resJson = await res.json();
+                        const iv = hexToBytes(resJson.iv);
+                        const fileCt = Buffer.from(resJson.data, 'base64');
+                        const dec = new TextDecoder();
+
+                        const fileObj = JSON.parse(
+                            dec.decode(
+                                await window.crypto.subtle.decrypt(
+                                    {
+                                        name: 'AES-GCM',
+                                        iv: iv
+                                    },
+                                    vaultKey,
+                                    fileCt
+                                )
+                            )
+                        );
+
+                        const a = window.document.createElement('a');
+                        a.href = window.URL.createObjectURL(
+                            new Blob(
+                                [Buffer.from(fileObj.data, 'base64')],
+                                { type: fileObj.type }
+                            )
+                        );
+                        a.download = fileObj.name;
+                        
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    }
+                }
+            }}>Download file</button>
+        </main >
     );
 }
