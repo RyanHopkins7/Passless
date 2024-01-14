@@ -4,7 +4,7 @@ mongoose.connect('mongodb://localhost:27017/passless');
 
 export interface IWebAuthenticator {};
 export interface IDevice {
-    deviceWrappedVaultKey: String,
+    wrappedVaultKey: String,
     _id: Types.ObjectId
 };
 export interface ISession {
@@ -32,7 +32,7 @@ const webAuthenticatorSchema = new mongoose.Schema({
 });
 
 const deviceSchema = new mongoose.Schema({
-    deviceWrappedVaultKey: String
+    wrappedVaultKey: String
 });
 
 const sessionSchema = new mongoose.Schema({

@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const data = await req.json();
     const sid = cookies().get('sid')?.value;
     const session = await Session.findOne({ sid: sid });
-    const user = await User.findById(session.user);
+    const user = await User.findById(session?.user);
 
     if (!user?.passphraseResetAllowed) {
         return NextResponse.json({}, {

@@ -6,9 +6,9 @@ import { pbkdf2Params } from "../params";
 import { sha256 } from "@noble/hashes/sha256";
 import { FormEvent, useState } from "react";
 
-// TODO
-// - save device key in local storage and create new device in database
-
+// TODO:
+// - make this into a server component
+// - redirect to vault if user is already signed in
 export default function LogIn() {
     const [username, setUsername] = useState<string>('');
     const [passphrase, setPassphrase] = useState<string[]>(new Array(6).fill(''));
@@ -36,10 +36,13 @@ export default function LogIn() {
         if (authRes.status === 201) {
             // Unwrap and return vault key
             const authResJson = await authRes.json();
-            const wrappedVaultKeyData = hexToBytes(authResJson.vaultKey);
-            const salt = hexToBytes(authResJson.salt);
 
-            const passphraseKeyData = pbkdf2(sha256, passphrase, salt, pbkdf2Params);
+            const passphraseKeyData = pbkdf2(
+                sha256,
+                passphrase,
+                hexToBytes(authResJson.salt),
+                pbkdf2Params
+            );
             const passphraseKey = await window.crypto.subtle.importKey(
                 'raw',
                 passphraseKeyData,
@@ -53,7 +56,7 @@ export default function LogIn() {
 
             return await window.crypto.subtle.unwrapKey(
                 'raw',
-                wrappedVaultKeyData,
+                hexToBytes(authResJson.vaultKey),
                 passphraseKey,
                 'AES-KW',
                 'AES-GCM',
@@ -121,8 +124,47 @@ export default function LogIn() {
                                 const vaultKey = await login(username, passphrase.join('-'));
 
                                 if (vaultKey !== null) {
-                                    console.log(vaultKey);
-                                    alert('success!');
+                                    // Generate new device key
+                                    // Save device key to server and local storage
+                                    const deviceKey = await window.crypto.subtle.generateKey(
+                                        {
+                                            name: 'AES-KW',
+                                            length: 256
+                                        },
+                                        true,
+                                        ['wrapKey', 'unwrapKey']
+                                    );
+
+                                    const deviceKeyData = new Uint8Array(
+                                        await window.crypto.subtle.exportKey(
+                                            'raw',
+                                            deviceKey
+                                        )
+                                    );
+
+                                    const wrappedVaultKey = await window.crypto.subtle.wrapKey(
+                                        'raw',
+                                        vaultKey,
+                                        deviceKey,
+                                        'AES-KW'
+                                    );
+
+                                    const res = await fetch('/api/user/device', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            'wrappedVaultKey': wrappedVaultKey
+                                        })
+                                    });
+
+                                    const resJson = await res.json();
+
+                                    window.localStorage.setItem('deviceId', resJson.deviceId);
+                                    window.localStorage.setItem('deviceKey', bytesToHex(deviceKeyData));
+
+                                    window.location.replace('/vault');
                                 } else {
                                     setError('Username or passphrase is not correct')
                                 }

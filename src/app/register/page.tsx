@@ -10,7 +10,7 @@ import { randomBytes } from '@noble/hashes/utils';
 
 // TODO:
 // - make this into a server component
-// - redirect if user is already logged in with a valid session
+// - redirect to vault if user is already signed in
 // - in the future, it will be necessary to allow user to reset passphrase
 export default function Register() {
     const [username, setUsername] = useState<string>();

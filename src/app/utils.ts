@@ -8,3 +8,6 @@ export function rand(): number {
     window.crypto.getRandomValues(arr);
     return arr[0] / (0xffffffff + 1);
 };
+
+// TODO:
+// add utils for importing, wrapping, unwrapping, generating, etc. keys

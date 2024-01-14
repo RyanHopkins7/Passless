@@ -1,6 +1,6 @@
 'use server';
 
-export default function Vault() {
+export default async function Vault() {
     return (
         <main></main>
     )
