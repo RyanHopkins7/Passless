@@ -23,15 +23,8 @@ export default function Register() {
 
     const genRandPassphrase = (words: string[]) => {
         const pass = new Array(6).fill('');
-        const randI = Math.floor(rand() * 6);
-
         return pass.map((_, i) => {
-            const randWord = words[Math.floor(rand() * words.length)];
-            // Randomly add a number to the passphrase
-            if (randI === i) {
-                return randWord + Math.floor(rand() * 100);
-            }
-            return randWord;
+            return words[Math.floor(rand() * words.length)];
         });
     };
 
@@ -172,7 +165,7 @@ export default function Register() {
                                 })
                                     .then(res => {
                                         setLoading(false);
-
+                                        
                                         if (res.status === 201) {
                                             window.location.replace('/login');
                                         } else {
