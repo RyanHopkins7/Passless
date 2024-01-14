@@ -31,4 +31,4 @@ export async function createSession(userId: Types.ObjectId): Promise<string> {
 }
 
 // TODO: add function to destroy session
-// TODO: add function to get user from session
+// TODO: add function to check if session exists
