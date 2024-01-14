@@ -23,8 +23,15 @@ export default function Register() {
 
     const genRandPassphrase = (words: string[]) => {
         const pass = new Array(6).fill('');
+        const randI = Math.floor(rand() * 6);
+
         return pass.map((_, i) => {
-            return words[Math.floor(rand() * words.length)];
+            const randWord = words[Math.floor(rand() * words.length)];
+            // Randomly add a number to the passphrase
+            if (randI === i) {
+                return randWord + Math.floor(rand() * 100);
+            }
+            return randWord;
         });
     };
 
@@ -152,29 +159,26 @@ export default function Register() {
                                     )
                                 );
 
-                                console.log(passWrappedVaultKey);
+                                fetch('/api/user/passphrase', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        'passphraseWrappedVaultKey': bytesToHex(passWrappedVaultKey),
+                                        'passphraseKeySalt': bytesToHex(passphraseKeySalt),
+                                        'passphraseHash': bytesToHex(passphraseHash)
+                                    })
+                                })
+                                    .then(res => {
+                                        setLoading(false);
 
-                                setLoading(false);
-
-                                // fetch('/api/user/passphrase', {
-                                //     method: 'POST',
-                                //     headers: {
-                                //         'Content-Type': 'application/json'
-                                //     },
-                                //     body: JSON.stringify({
-                                //         'passphraseWrappedVaultKey': bytesToHex(passWrappedVaultKey),
-                                //         'passphraseKeySalt': bytesToHex(passphraseKeySalt),
-                                //         'passphraseHash': bytesToHex(passphraseHash)
-                                //     })
-                                // })
-                                //     .then(res => {
-                                //         if (res.status === 201) {
-                                //             setLoading(false);
-                                //             window.location.replace('/login');
-                                //         } else {
-                                //             // TODO
-                                //         }
-                                //     });
+                                        if (res.status === 201) {
+                                            window.location.replace('/login');
+                                        } else {
+                                            // TODO
+                                        }
+                                    });
                             }
                         }}>
                         I saved my passphrase
