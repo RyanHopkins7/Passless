@@ -1,79 +1,35 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { bytesToHex } from '@noble/hashes/utils';
+import { rand } from '../utils';
+import { pbkdf2 } from '@noble/hashes/pbkdf2';
+import { pbkdf2Params } from '@/params';
+import { sha256 } from '@noble/hashes/sha256';
+import { randomBytes } from '@noble/hashes/utils';
 
 export default function Register() {
     const [vaultKey, setVaultKey] = useState<CryptoKey>();
     const [wordList, setWordList] = useState<string[]>([]);
     const [passphrase, setPassphrase] = useState<string[]>(new Array(6).fill(''));
-    const [passphraseKey, setPassphraseKey] = useState<CryptoKey>();
+    const [passphraseKeyData, setPassphraseKeyData] = useState<Uint8Array>();
     const [passphraseKeySalt, setPassphraseKeySalt] = useState<Uint8Array>();
     const [passphraseHash, setPassphraseHash] = useState<Uint8Array>();
     const [passphraseHashSalt, setPassphraseHashSalt] = useState<Uint8Array>();
     const [loading, setLoading] = useState<boolean>(true);
 
-    // TODO: this is wrong now!!!
-    // General order of operations
-    // 1. Get device wrapped vault key from server
-    // 2. Decrypt wrapped vault encryption secret
-    // 3. Generate random passphrase
-    // 4. Generate encryption key from random passphrase
-    // 5. Generate authentication hash from random passphrase
-    // 6. Encrypt vault encryption secret with session AES key and a separate copy with passphrase key
-    // 7. Send passphrase hash and wrapped vault encryption secrets to server
-
     const genRandPassphrase = (words: string[]) => {
         const pass = new Array(6).fill('');
-        const rand = () => {
-            const arr = new Uint32Array(1);
-            window.crypto.getRandomValues(arr);
-            return arr[0] / (0xffffffff + 1);
-        };
-
         return pass.map((_, i) => {
             return words[Math.floor(rand() * words.length)];
         });
     };
 
     useEffect(() => {
-        // TODO: there seems to be an issue that the passphrase
-        // is not generated upon page load from time to time...
-        // TODO: what if user clears local storage???
-        const deviceId = window.localStorage.getItem('deviceId');
+        // TODO: get wrapped vault key from local storage 
+        // otherwise, regenerate key and save to local storage
 
-        // Get wrapped vault key from server
-        fetch(`/api/user/devices/${deviceId}/key`)
-            .then(res => res.json())
-            .then(async resJson => {
-                // Unwrap vault key
-                // TODO: could it be more efficient to store deviceKey in raw format?
-                const deviceKey = await window.crypto.subtle.importKey(
-                    'jwk',
-                    JSON.parse(
-                        window.localStorage.getItem('deviceKey') || '{}'
-                    ),
-                    {
-                        name: 'AES-KW',
-                        length: 256
-                    },
-                    true,
-                    ['wrapKey', 'unwrapKey']
-                );
-
-                const wrappedKey = hexToBytes(resJson.key);
-                setVaultKey(
-                    await window.crypto.subtle.unwrapKey(
-                        'raw',
-                        wrappedKey,
-                        deviceKey,
-                        'AES-KW',
-                        'AES-GCM',
-                        true,
-                        ['encrypt', 'decrypt']
-                    )
-                );
-            });
+        // const deviceId = window.localStorage.getItem('deviceId');
 
         // Get word list
         fetch('/wordlist.txt')
@@ -91,75 +47,28 @@ export default function Register() {
     }, [wordList]);
 
     useEffect(() => {
-        // We want to prevent user interaction until key generation is complete
+        // Generate keys
+        // Prevent user interaction until key generation is complete
         setLoading(true);
 
         const passString = passphrase.join('-');
         if (!passphrase.some((w) => w === '')) {
-            const enc = new TextEncoder();
-
-            const keySalt = new Uint8Array(16);
-            window.crypto.getRandomValues(keySalt);
+            const keySalt = randomBytes(16);
             setPassphraseKeySalt(keySalt);
 
-            const hashSalt = new Uint8Array(16);
-            window.crypto.getRandomValues(hashSalt);
+            // TODO: use username as hash salt!
+            const hashSalt = randomBytes(16);
             setPassphraseHashSalt(hashSalt);
 
-            window.crypto.subtle.importKey(
-                'raw',
-                enc.encode(passString),
-                'PBKDF2',
-                true,
-                ['deriveKey']
-            )
-                .then(async (keyMaterial) => {
-                    // Derive key encryption key from passphrase
-                    // Parameters exceed OWASP recommendations
-                    // https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#pbkdf2
-                    const key = await window.crypto.subtle.deriveKey(
-                        {
-                            name: 'PBKDF2',
-                            salt: keySalt,
-                            iterations: 600000,
-                            hash: 'SHA-256'
-                        },
-                        keyMaterial,
-                        { name: 'AES-KW', length: 256 },
-                        true,
-                        ['wrapKey']
-                    );
+            setPassphraseKeyData(
+                pbkdf2(sha256, passString, keySalt, pbkdf2Params)
+            );
 
-                    setPassphraseKey(key);
+            setPassphraseHash(
+                pbkdf2(sha256, passString, hashSalt, pbkdf2Params)
+            );
 
-                    // PBKDF2 is not memory hard
-                    // Therefore, it should not be so vulnerable to side channels
-                    // and may be more suitable for hashing on the client side
-                    const hashKey = await window.crypto.subtle.deriveKey(
-                        {
-                            name: 'PBKDF2',
-                            salt: hashSalt,
-                            iterations: 600000,
-                            hash: 'SHA-256'
-                        },
-                        keyMaterial,
-                        // Algorithm doesn't really matter
-                        { name: 'AES-KW', length: 256 },
-                        true,
-                        // Key usages don't really matter either
-                        ['wrapKey']
-                    );
-
-                    const hash = new Uint8Array(
-                        await window.crypto.subtle.exportKey(
-                            'raw',
-                            hashKey
-                        )
-                    );
-
-                    setPassphraseHash(hash);
-                    setLoading(false);
-                });
+            setLoading(false);
         }
     }, [passphrase]);
 
@@ -197,12 +106,23 @@ export default function Register() {
                             if (
                                 !loading &&
                                 vaultKey !== undefined &&
-                                passphraseKey !== undefined &&
+                                passphraseKeyData !== undefined &&
                                 passphraseKeySalt !== undefined &&
                                 passphraseHash !== undefined &&
                                 passphraseHashSalt !== undefined
                             ) {
                                 setLoading(true);
+
+                                const passphraseKey = await window.crypto.subtle.importKey(
+                                    'raw',
+                                    passphraseKeyData,
+                                    {
+                                        name: 'AES-KW',
+                                        length: 256
+                                    },
+                                    true,
+                                    ['wrapKey']
+                                );
 
                                 // Wrap vault key with passphrase derived key
                                 // Send wrapped vault key and passphrase hash to the server
@@ -223,14 +143,13 @@ export default function Register() {
                                     body: JSON.stringify({
                                         'passphraseWrappedVaultKey': bytesToHex(passWrappedVaultKey),
                                         'passphraseKeySalt': bytesToHex(passphraseKeySalt),
-                                        'passphraseHash': bytesToHex(passphraseHash),
-                                        'passphraseHashSalt': bytesToHex(passphraseHashSalt)
+                                        'passphraseHash': bytesToHex(passphraseHash)
                                     })
                                 })
                                     .then(res => {
                                         if (res.status === 201) {
                                             setLoading(false);
-                                            window.location.replace('/passphrase/validate');
+                                            window.location.replace('/login');
                                         } else {
                                             // TODO
                                         }

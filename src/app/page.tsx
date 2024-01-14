@@ -79,7 +79,6 @@ export default function Home() {
                         Create an Account
                     </Link>
                 </div>
-                {/* TODO: style this button differently */}
                 <div className="flex justify-center">
                     <Link
                         href="/login"
