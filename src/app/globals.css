@@ -29,6 +29,10 @@ p, a, h1, h2, h3, h4, h5, h6 {
     background-color: #CAC2F9;
 }
 
+.border-medium-purple {
+    border-color: #CAC2F9;
+}
+
 .dark-purple-dashed-border {
     border: 3px dashed #8680DF;
 }
@@ -52,4 +56,20 @@ p, a, h1, h2, h3, h4, h5, h6 {
     background-color: #8680DF;
     border: 2px solid rgba(0,0,0,0);
     color: #FFFFFF;
+}
+
+.button.bg-dark-purple.secondary {
+    background-color: #8680DF;
+    border: 2px solid rgba(0,0,0,0);
+    color: #FFFFFF;
+}
+
+.button.bg-dark-purple.secondary:hover {
+    background-color: rgba(0,0,0,0);
+    border: 2px solid #8680DF;
+    color: #8680DF;
+}
+
+.w-xl {
+    width: 36rem;
 }
