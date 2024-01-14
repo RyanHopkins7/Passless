@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     const session = await Session.findOne({ sid: sid });
     const user = await User.findById(session.user);
 
-    if (!user.passphraseResetAllowed) {
+    if (!user?.passphraseResetAllowed) {
         return NextResponse.json({}, {
             status: 403
         });

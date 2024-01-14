@@ -29,15 +29,6 @@ export default function Register() {
     };
 
     useEffect(() => {
-        // Fetch valid username
-        fetch('/api/user', {
-            method: 'POST'
-        })
-            .then(r => r.json())
-            .then(rJson => {
-                setUsername(rJson.username)
-            });
-
         // Get word list
         fetch('/wordlist.txt')
             .then(r => r.text())
@@ -47,8 +38,17 @@ export default function Register() {
     }, []);
 
     useEffect(() => {
-        // Generate passphrase after wordlist loads
+        // Generate passphrase and username after wordlist loads
         if (wordList.length > 0 && passphrase.join('') === '') {
+            // Fetch valid username
+            fetch('/api/user', {
+                method: 'POST'
+            })
+                .then(r => r.json())
+                .then(rJson => {
+                    setUsername(rJson.username)
+                });
+
             setPassphrase(genRandPassphrase(wordList));
         }
     }, [wordList]);
