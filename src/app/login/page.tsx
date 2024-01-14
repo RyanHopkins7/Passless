@@ -148,11 +148,13 @@ export default function LogIn() {
                                         )
                                     );
 
-                                    const wrappedVaultKey = await window.crypto.subtle.wrapKey(
-                                        'raw',
-                                        vaultKey,
-                                        deviceKey,
-                                        'AES-KW'
+                                    const wrappedVaultKey = new Uint8Array(
+                                        await window.crypto.subtle.wrapKey(
+                                            'raw',
+                                            vaultKey,
+                                            deviceKey,
+                                            'AES-KW'
+                                        )
                                     );
 
                                     const res = await fetch('/api/user/device', {
@@ -161,7 +163,7 @@ export default function LogIn() {
                                             'Content-Type': 'application/json'
                                         },
                                         body: JSON.stringify({
-                                            'wrappedVaultKey': wrappedVaultKey
+                                            'wrappedVaultKey': bytesToHex(wrappedVaultKey)
                                         })
                                     });
 
