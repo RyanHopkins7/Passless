@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import { Session, User, IUser } from "@/database/schemas";
+import { Session, User, IUser } from "../database/schemas";
 import { cookies } from "next/headers";
 import { Types } from "mongoose";
 
