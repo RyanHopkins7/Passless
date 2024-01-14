@@ -4,18 +4,21 @@ import { useEffect, useState } from 'react';
 import { bytesToHex } from '@noble/hashes/utils';
 import { rand } from '../utils';
 import { pbkdf2 } from '@noble/hashes/pbkdf2';
-import { pbkdf2Params } from '@/params';
+import { pbkdf2Params } from '../params';
 import { sha256 } from '@noble/hashes/sha256';
 import { randomBytes } from '@noble/hashes/utils';
 
+// TODO:
+// - make this into a server component
+// - redirect if user is already logged in with a valid session
+// - in the future, it will be necessary to allow user to reset passphrase
 export default function Register() {
-    const [vaultKey, setVaultKey] = useState<CryptoKey>();
+    const [username, setUsername] = useState<string>();
     const [wordList, setWordList] = useState<string[]>([]);
     const [passphrase, setPassphrase] = useState<string[]>(new Array(6).fill(''));
     const [passphraseKeyData, setPassphraseKeyData] = useState<Uint8Array>();
     const [passphraseKeySalt, setPassphraseKeySalt] = useState<Uint8Array>();
     const [passphraseHash, setPassphraseHash] = useState<Uint8Array>();
-    const [passphraseHashSalt, setPassphraseHashSalt] = useState<Uint8Array>();
     const [loading, setLoading] = useState<boolean>(true);
 
     const genRandPassphrase = (words: string[]) => {
@@ -26,10 +29,14 @@ export default function Register() {
     };
 
     useEffect(() => {
-        // TODO: get wrapped vault key from local storage 
-        // otherwise, regenerate key and save to local storage
-
-        // const deviceId = window.localStorage.getItem('deviceId');
+        // Fetch valid username
+        fetch('/api/user', {
+            method: 'POST'
+        })
+            .then(r => r.json())
+            .then(rJson => {
+                setUsername(rJson.username)
+            });
 
         // Get word list
         fetch('/wordlist.txt')
@@ -52,34 +59,37 @@ export default function Register() {
         setLoading(true);
 
         const passString = passphrase.join('-');
-        if (!passphrase.some((w) => w === '')) {
+        if (
+            !passphrase.some((w) => w === '')
+            && username !== undefined
+        ) {
             const keySalt = randomBytes(16);
             setPassphraseKeySalt(keySalt);
-
-            // TODO: use username as hash salt!
-            const hashSalt = randomBytes(16);
-            setPassphraseHashSalt(hashSalt);
 
             setPassphraseKeyData(
                 pbkdf2(sha256, passString, keySalt, pbkdf2Params)
             );
 
+            // Salting the passphrase hash with username
+            // will allow us to calculate the passphrase hash
+            // without the need to expose the salt via an API endpoint
             setPassphraseHash(
-                pbkdf2(sha256, passString, hashSalt, pbkdf2Params)
+                pbkdf2(sha256, passString, username, pbkdf2Params)
             );
 
             setLoading(false);
         }
-    }, [passphrase]);
+    }, [passphrase, username]);
 
     return (
         <main className="flex justify-center">
             <div className="w-xl my-10">
-                <h2 className="text-3xl font-bold mb-5">Generate Passphrase</h2>
+                <h2 className="text-3xl font-bold mb-5">Generate Username and Passphrase</h2>
                 <p>
-                    You will need your passphrase to access your account in case you lose your devices.
-                    Please write it down and store it somewhere you won't lose it.
+                    You will need your username and passphrase to access your account.
+                    Please write them down and don't lose them.
                 </p>
+                <p>Username: {username}</p>
                 <div className="grid grid-cols-3 gap-4 m-5 my-10 w-full">
                     {passphrase.map((w, i) => {
                         return (<div key={i} className="bg-light-purple w-30 h-12 px-4 py-3 rounded-md text-center font-bold">{w}</div>);
@@ -105,13 +115,20 @@ export default function Register() {
                         onClick={async () => {
                             if (
                                 !loading &&
-                                vaultKey !== undefined &&
                                 passphraseKeyData !== undefined &&
                                 passphraseKeySalt !== undefined &&
-                                passphraseHash !== undefined &&
-                                passphraseHashSalt !== undefined
+                                passphraseHash !== undefined
                             ) {
                                 setLoading(true);
+
+                                const vaultKey = await window.crypto.subtle.generateKey(
+                                    {
+                                        name: 'AES-GCM',
+                                        length: 256,
+                                    },
+                                    true,
+                                    ['encrypt', 'decrypt'],
+                                );
 
                                 const passphraseKey = await window.crypto.subtle.importKey(
                                     'raw',
@@ -121,7 +138,7 @@ export default function Register() {
                                         length: 256
                                     },
                                     true,
-                                    ['wrapKey']
+                                    ['wrapKey', 'unwrapKey']
                                 );
 
                                 // Wrap vault key with passphrase derived key
@@ -135,25 +152,29 @@ export default function Register() {
                                     )
                                 );
 
-                                fetch('/api/user/passphrase', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        'passphraseWrappedVaultKey': bytesToHex(passWrappedVaultKey),
-                                        'passphraseKeySalt': bytesToHex(passphraseKeySalt),
-                                        'passphraseHash': bytesToHex(passphraseHash)
-                                    })
-                                })
-                                    .then(res => {
-                                        if (res.status === 201) {
-                                            setLoading(false);
-                                            window.location.replace('/login');
-                                        } else {
-                                            // TODO
-                                        }
-                                    });
+                                console.log(passWrappedVaultKey);
+
+                                setLoading(false);
+
+                                // fetch('/api/user/passphrase', {
+                                //     method: 'POST',
+                                //     headers: {
+                                //         'Content-Type': 'application/json'
+                                //     },
+                                //     body: JSON.stringify({
+                                //         'passphraseWrappedVaultKey': bytesToHex(passWrappedVaultKey),
+                                //         'passphraseKeySalt': bytesToHex(passphraseKeySalt),
+                                //         'passphraseHash': bytesToHex(passphraseHash)
+                                //     })
+                                // })
+                                //     .then(res => {
+                                //         if (res.status === 201) {
+                                //             setLoading(false);
+                                //             window.location.replace('/login');
+                                //         } else {
+                                //             // TODO
+                                //         }
+                                //     });
                             }
                         }}>
                         I saved my passphrase
