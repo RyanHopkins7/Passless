@@ -77,7 +77,7 @@ export default function LogIn() {
                 </p>
 
                 <h3 className="text-xl font-medium my-5">Enter Username</h3>
-                <input required type="text" name="username" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Enter username"></input>
+                <input type="text" className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl" placeholder="Enter username"></input>
                 
                 <h3 className="text-xl font-medium mb-5">Enter Passphrase</h3>
                 <div className="grid grid-cols-3 gap-4 m-5 my-5">

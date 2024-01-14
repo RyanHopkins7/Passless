@@ -89,10 +89,43 @@ export default function Register() {
                     You will need your username and passphrase to access your account.
                     Please write them down and don't lose them.
                 </p>
-                <p>Username: {username}</p>
+
+                <h3 className="text-xl font-medium my-5">Generate Username</h3>
+                <input
+                    disabled
+                    type="text"
+                    className="block bg-light-purple m-3 px-6 py-2 w-80 rounded-3xl"
+                    value={username}
+                ></input>
+                <div className="flex justify-center">
+                    <button className={loading ?
+                        "inline font-bold cursor-wait" :
+                        "inline font-bold cursor-pointer hover:underline"
+                    } onClick={() => {
+                        if (!loading) {
+                            fetch('/api/user', {
+                                method: 'POST'
+                            })
+                                .then(r => r.json())
+                                .then(rJson => {
+                                    setUsername(rJson.username)
+                                });
+                        }
+                    }}>
+                        <img className="inline w-8 h-8 my-5" src="/reset.svg"></img>
+                        Regenerate username
+                    </button>
+                </div>
+
+                <h3 className="text-xl font-medium mb-5">Generate Passphrase</h3>
                 <div className="grid grid-cols-3 gap-4 m-5 my-10 w-full">
                     {passphrase.map((w, i) => {
-                        return (<div key={i} className="bg-light-purple w-30 h-12 px-4 py-3 rounded-md text-center font-bold">{w}</div>);
+                        return (
+                            <div
+                                key={i}
+                                className="bg-light-purple w-30 h-12 px-4 py-3 rounded-md text-center font-bold"
+                            >{w}</div>
+                        );
                     })}
                 </div>
                 <div className="flex justify-center">
@@ -110,8 +143,8 @@ export default function Register() {
                 </div>
                 <div className="flex justify-center">
                     <button className={loading ?
-                        "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-wait" :
-                        "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer"}
+                        "block button bg-dark-purple m-3 px-6 py-2 w-96 rounded-3xl text-white font-bold cursor-wait" :
+                        "block button bg-dark-purple m-3 px-6 py-2 w-96 rounded-3xl text-white font-bold cursor-pointer"}
                         onClick={async () => {
                             if (
                                 !loading &&
@@ -165,7 +198,7 @@ export default function Register() {
                                 })
                                     .then(res => {
                                         setLoading(false);
-                                        
+
                                         if (res.status === 201) {
                                             window.location.replace('/login');
                                         } else {
@@ -174,7 +207,7 @@ export default function Register() {
                                     });
                             }
                         }}>
-                        I saved my passphrase
+                        I saved my username and passphrase
                     </button>
                 </div>
             </div>
