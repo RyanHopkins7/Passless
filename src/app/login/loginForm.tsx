@@ -41,6 +41,7 @@ export default function LoginForm() {
                 hexToBytes(authResJson.salt),
                 pbkdf2Params
             );
+            
             const passphraseKey = await window.crypto.subtle.importKey(
                 'raw',
                 passphraseKeyData,

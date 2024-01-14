@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { getUserFromSession } from "../session";
+import FileVault from "./fileVault";
 
 export default async function Vault() {
     const user = await getUserFromSession();
@@ -13,6 +14,6 @@ export default async function Vault() {
     }
 
     return (
-        <main></main>
+        <FileVault />
     )
 }
