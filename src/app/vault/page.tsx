@@ -25,13 +25,6 @@ export default function Vault() {
         return { aesKey: aesKey, hmacKey: hmacKey }
     }
 
-    const appendBuffer = (buffer1: ArrayBuffer, buffer2: ArrayBuffer) {
-        var tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
-        tmp.set(new Uint8Array(buffer1), 0);
-        tmp.set(new Uint8Array(buffer2), buffer1.byteLength);
-        return tmp.buffer;
-    }
-
     const seal = async (pt: string, aesKey: CryptoKey, hmacKey: CryptoKey) => {
         const iv = window.crypto.getRandomValues(new Uint8Array(16));
         const ct = await window.crypto.subtle.encrypt({
@@ -41,7 +34,7 @@ export default function Vault() {
         const mac = await window.crypto.subtle.sign({
             name: 'HMAC',
             hash: 'SHA-256'
-        }, hmacKey, appendBuffer(iv, ct));
+        }, hmacKey, ct);
 
         // B64 encode again to make sure server enterprets as a string
         return Buffer.from(JSON.stringify({
@@ -67,7 +60,7 @@ export default function Vault() {
         const pt = await window.crypto.subtle.decrypt({
             name: 'AES-CBC',
             iv: iv
-        }, aesKey, appendBuffer(iv, ciphertext));
+        }, aesKey, ciphertext);
 
         return Buffer.from(pt).toString('utf-8');
     }
@@ -82,8 +75,8 @@ export default function Vault() {
                     window.crypto.subtle.importKey('jwk', hmacKeyJWK, { name: 'HMAC', hash: 'SHA-256' }, true, ['sign', 'verify'])
                         .then((hmacKey) => {
                             fetch('/api/passwords')
-                                .then((res) => res.json())
-                                .then((resJson) => {
+                                .then((res)=>res.json())
+                                .then((resJson)=>{
                                     const ct = resJson.passwordData.json;
                                     unseal(ct, aesKey, hmacKey)
                                         .then((pt) => {
