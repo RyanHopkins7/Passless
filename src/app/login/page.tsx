@@ -1,14 +1,12 @@
 'use client';
 
-import { bytesToHex } from "@noble/hashes/utils";
+import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 import { pbkdf2 } from "@noble/hashes/pbkdf2";
 import { pbkdf2Params } from "../params";
 import { sha256 } from "@noble/hashes/sha256";
 import { FormEvent, useState } from "react";
 
 // TODO
-// - switch to noble hashes pbkdf2
-// - authenticate to server using generated hash from passphrase
 // - save device key in local storage and create new device in database
 
 export default function LogIn() {
@@ -20,11 +18,11 @@ export default function LogIn() {
     const login = async (
         username: string,
         passphrase: string
-    ) => {
-        // Return true if passphrase hash is accepted by server and false otherwise
+    ): Promise<CryptoKey | null> => {
+        // Return unwrapped vault key if authentication is successful and null otherwise
         const hash = pbkdf2(sha256, passphrase, username, pbkdf2Params);
 
-        const res = await fetch('/api/user/passphrase/login', {
+        const authRes = await fetch('/api/user/passphrase/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -35,7 +33,36 @@ export default function LogIn() {
             })
         });
 
-        return res.status === 201;
+        if (authRes.status === 201) {
+            // Unwrap and return vault key
+            const authResJson = await authRes.json();
+            const wrappedVaultKeyData = hexToBytes(authResJson.vaultKey);
+            const salt = hexToBytes(authResJson.salt);
+
+            const passphraseKeyData = pbkdf2(sha256, passphrase, salt, pbkdf2Params);
+            const passphraseKey = await window.crypto.subtle.importKey(
+                'raw',
+                passphraseKeyData,
+                {
+                    name: 'AES-KW',
+                    length: 256
+                },
+                true,
+                ['wrapKey', 'unwrapKey']
+            );
+
+            return await window.crypto.subtle.unwrapKey(
+                'raw',
+                wrappedVaultKeyData,
+                passphraseKey,
+                'AES-KW',
+                'AES-GCM',
+                true,
+                ['encrypt', 'decrypt']
+            );
+        }
+
+        return null;
     }
 
     return (
@@ -69,7 +96,7 @@ export default function LogIn() {
                                     type="text"
                                     id={`passphraseWord${i}`}
                                     className="max-w-full bg-transparent outline-none focus:border-b-2 border-medium-purple"
-                                    placeholder={"Enter word " + (i+1)}
+                                    placeholder={"Enter word " + (i + 1)}
                                     onInput={(e: FormEvent<HTMLInputElement>) => {
                                         setPassphrase((pass) => {
                                             pass[i] = (e.target as HTMLInputElement).value.toLowerCase();
@@ -91,13 +118,10 @@ export default function LogIn() {
                                 setError('Please completely fill in your passphrase');
                             } else {
                                 setLoading(true);
-                                const res = await login(username, passphrase.join('-'));
+                                const vaultKey = await login(username, passphrase.join('-'));
 
-                                if (res) {
-                                    // TODO: generate key from passphrase
-                                    // unwrap vault key
-                                    // generate & save new device key if necessary
-                                    // window.location.replace('/vault');
+                                if (vaultKey !== null) {
+                                    console.log(vaultKey);
                                     alert('success!');
                                 } else {
                                     setError('Username or passphrase is not correct')
