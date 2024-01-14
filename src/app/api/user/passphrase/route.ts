@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     }
 
     // Re-hash passphrase from client
-    const salt = new Uint8Array(randomBytes(16));
+    const salt = randomBytes(16);
     const hash = argon2id(
         data.passphraseHash,
         salt,
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
         session?.user,
         {
             passphraseHash: Buffer.from(hash),
-            passphraseHashSalt: Buffer.from(salt),
+            passphraseHashSalt: salt,
             passphraseKeySalt: data.passphraseKeySalt,
             passphraseWrappedVaultKey: data.passphraseWrappedVaultKey,
             passphraseResetAllowed: false

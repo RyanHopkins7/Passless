@@ -1,6 +1,9 @@
 'use client';
 
-import { hexToBytes, bytesToHex } from "@noble/hashes/utils";
+import { bytesToHex } from "@noble/hashes/utils";
+import { pbkdf2 } from "@noble/hashes/pbkdf2";
+import { pbkdf2Params } from "../params";
+import { sha256 } from "@noble/hashes/sha256";
 import { FormEvent, useState } from "react";
 
 // TODO
@@ -16,44 +19,10 @@ export default function LogIn() {
 
     const login = async (
         username: string,
-        passphrase: string,
-        salt: string
+        passphrase: string
     ) => {
         // Return true if passphrase hash is accepted by server and false otherwise
-        // TODO: should generating the hash from passphrase be placed into a function and exported?
-        const enc = new TextEncoder();
-
-        const keyMaterial = await window.crypto.subtle.importKey(
-            'raw',
-            enc.encode(passphrase),
-            'PBKDF2',
-            true,
-            ['deriveKey']
-        );
-
-        // TODO: if user skips to this page before setting passphrase, 
-        // it will cause an error since the salt has not been defined
-        const hashKey = await window.crypto.subtle.deriveKey(
-            {
-                name: 'PBKDF2',
-                salt: hexToBytes(salt),
-                iterations: 600000,
-                hash: 'SHA-256'
-            },
-            keyMaterial,
-            // Algorithm doesn't really matter
-            { name: 'AES-KW', length: 256 },
-            true,
-            // Key usages don't really matter either
-            ['wrapKey']
-        );
-
-        const hash = new Uint8Array(
-            await window.crypto.subtle.exportKey(
-                'raw',
-                hashKey
-            )
-        );
+        const hash = pbkdf2(sha256, passphrase, username, pbkdf2Params);
 
         const res = await fetch('/api/user/passphrase/login', {
             method: 'POST',
@@ -68,10 +37,6 @@ export default function LogIn() {
 
         return res.status === 201;
     }
-
-    // const genKey = async (pass: string): Promise<CryptoKey> {
-
-    // }
 
     return (
         <main className="flex justify-center">
@@ -120,15 +85,13 @@ export default function LogIn() {
                         "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-wait" :
                         "block button bg-dark-purple m-3 px-6 py-2 w-80 rounded-3xl text-white font-bold cursor-pointer"}
                         onClick={async () => {
-                            if (passphrase.some((w) => w === '')) {
-                                setError('Please completely fill in your passphrase')
+                            if (username === '') {
+                                setError('Please enter your username');
+                            } else if (passphrase.some((w) => w === '')) {
+                                setError('Please completely fill in your passphrase');
                             } else {
                                 setLoading(true);
-                                const userData = await (await fetch('/api/user')).json();
-                                const res = await login(userData.username, passphrase.join('-'), userData.salt);
-
-                                alert(res);
-                                setLoading(false);
+                                const res = await login(username, passphrase.join('-'));
 
                                 if (res) {
                                     // TODO: generate key from passphrase
@@ -137,8 +100,10 @@ export default function LogIn() {
                                     // window.location.replace('/vault');
                                     alert('success!');
                                 } else {
-                                    setError('Passphrase is not correct')
+                                    setError('Username or passphrase is not correct')
                                 }
+
+                                setLoading(false);
                             }
                         }}>
                         Continue

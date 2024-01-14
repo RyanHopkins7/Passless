@@ -6,6 +6,7 @@ import { argon2id } from "@noble/hashes/argon2";
 import { argon2idParams } from "../params";
 import { timingSafeEqual } from "crypto";
 import { createSession } from "../../session";
+import { randomBytes } from "crypto";
 
 export async function POST(req: Request) {
     // Create session if username and passphrase hash is valid
@@ -13,10 +14,11 @@ export async function POST(req: Request) {
     const user = await User.findOne({
         username: data.username
     });
+    const salt = user?.passphraseHashSalt || randomBytes(16);
 
     const hash = argon2id(
         data.passphraseHash,
-        user?.passphraseHashSalt,
+        salt,
         argon2idParams
     );
 
