@@ -9,7 +9,7 @@ export interface IDevice {
 };
 export interface ISession {
     sid: String,
-    user: String,
+    user: Types.ObjectId,
     _id: Types.ObjectId
 };
 export interface IUser {
@@ -44,7 +44,8 @@ const sessionSchema = new mongoose.Schema({
         required: true
     },
     user: {
-        type: String,
+        type: Types.ObjectId,
+        ref: 'User',
         required: true
     }
 });
