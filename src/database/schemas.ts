@@ -1,19 +1,6 @@
 import mongoose, { Types } from "mongoose";
-import { env } from "process";
 
-if (env.NODE_ENV === 'production') {
-    const username = env.MDB_USER;
-    const password = env.MDB_PASS;
-    const uri = env.MDB_URI;
-
-    mongoose.connect(
-        `mongodb://${username}:${password}@${uri}:27017`, {
-            ssl: true
-        }
-    );
-} else {
-    mongoose.connect('mongodb://localhost:27017');
-}
+mongoose.connect('mongodb://localhost:27017');
 
 export interface IWebAuthenticator {};
 export interface IDevice {
