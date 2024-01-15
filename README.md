@@ -3,7 +3,7 @@ Passless is an experimental demonstration of a secure and end to end encrypted f
 
 ## Run the development environment
 ```
-git clone git@github.com:RyanHopkins7/Passless.git
+git clone https://github.com/RyanHopkins7/Passless.git
 docker run -p 27017:27017 --name mongodb -d mongo:latest
 cd Passless
 npm install
