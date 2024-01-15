@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Passless
+Passless is an experimental demonstration of a secure and end to end encrypted file sharing web application which doesn't use traditional passwords for authenticaton or key derivation.
 
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Run the development environment
 ```
+git clone git@github.com:RyanHopkins7/Passless.git
+docker run -p 27017:27017 --name mongodb -d mongo:latest
+cd Passless
+npm install
+npm run dev
+```
+You should then be able to view the project at http://localhost:3000
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## How it works
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Account registration
+When a user registers an account for the first time, 
+1. The user's username and six word passphrase are randomly selected for them using a cryptographically secure PRNG
+2. A "vault key" is randomly generated on the user's device which will be used to encrypt and decrypt files
+3. The passphrase is hashed using PBKDF2 with the username as salt in order to derive the authentication key
+4. The passphrase is also used to generate a wrapping key with PBKDF2 using a random salt
+5. The passphrase-derived wrapping key is used to wrap the "vault key"
+6. The authentication key is sent to the server, re-hashed using Argon2id, and saved
+7. The wrapped "vault key" is also sent to the server and saved
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+### Signing in
+When a user signs into their account,
+1. The user enters their username and passphrase
+2. The username and passphrase are used to derive the authentication key
+3. The authentication key is validated by the server
+4. If the authentication is successful, then the server will send the wrapped "vault key" to the user
+5. The passphrase will then be used to regenerate the wrapping key
+6. The wrapping key will then be used to unwrap the "vault key"
+7. The user's device will then randomly generate a "device key" and save it to the local storage of their browser
+8. The user's "device key" will then be used to wrap the "vault key"
+9. The newly wrapped vault key will then be sent back to the server and saved
 
-## Learn More
+### The vault
+When an authenticated user visits the vault page,
+1. The server will send the user their wrapped "vault key" which was wrapped with the "device key"
+2. The user will use their saved "device key" to unwrap the "vault key"
+3. The "vault key" can then be used to encrypt and decrypt files when sending and receiving file data to the server
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+## Future plans
+In the future, I would like to use WebAuthn as a means to authenticate to the server before the server will send back the wrapped "vault key". Additionally, I'd like to allow the user to send their "vault key" to a new session using a password authenticated key agreement protocol. Finally, I'd like to allow publicly sharing encrypted files and uploading more than one file at a time.
