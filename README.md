@@ -33,7 +33,7 @@ When a user signs into their account,
 6. The wrapping key will then be used to unwrap the "vault key"
 7. The user's device will then randomly generate a "device key" and save it to the local storage of their browser
 8. The user's "device key" will then be used to wrap the "vault key"
-9. The newly wrapped vault key will then be sent back to the server and saved
+9. The newly wrapped "vault key" will then be sent back to the server and saved
 
 ### The vault
 When an authenticated user visits the vault page,
