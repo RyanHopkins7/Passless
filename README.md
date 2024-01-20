@@ -11,6 +11,13 @@ npm run dev
 ```
 You should then be able to view the project at http://localhost:3000
 
+## Deploy the production server
+```
+cd Passless
+git pull
+sudo ./deploy.sh
+```
+
 ## How it works
 
 ### Account registration
