@@ -1,8 +1,24 @@
 import mongoose, { Types } from "mongoose";
+import { env } from "process";
 
-mongoose.connect('mongodb://localhost:27017/passless');
+if (env.NODE_ENV && env.NODE_ENV === 'production') {
+    mongoose.connect(
+        `mongodb://${env.MDB_USR}:${env.MDB_PSW}@${env.MDB_IP}:27017/passless`,
+        {
+            authSource: 'admin',
+            autoCreate: true,
+            autoIndex: true
+        }
+    );
+} else {
+    mongoose.connect('mongodb://localhost:27017/admin',
+        {
+            autoCreate: true,
+            autoIndex: true
+        });
+}
 
-export interface IWebAuthenticator {};
+export interface IWebAuthenticator { };
 export interface IDevice {
     wrappedVaultKey: String,
     _id: Types.ObjectId
