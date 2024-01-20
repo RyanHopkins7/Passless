@@ -1,8 +1,12 @@
 # Deploy production build
+# Must be run as sudo
 
+/etc/init.d/nginx stop
 docker stop $(docker ps -a -q)
 docker rm $(docker ps -a -q)
 docker network rm passless-bridge
+
+cp passless.config /etc/nginx/sites-available/passless.config
 
 npm install
 npm run build
@@ -28,3 +32,5 @@ docker build -t passless \
 docker run -d -p 0.0.0.0:3000:3000 --name passless-server passless
 
 docker network connect passless-bridge passless-server
+
+/etc/init.d/nginx start

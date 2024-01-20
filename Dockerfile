@@ -1,4 +1,4 @@
-FROM node:current-bookworm-slim
+FROM node:current-alpine
 
 ARG MDB_IP
 ARG MDB_USR
