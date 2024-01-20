@@ -1,4 +1,4 @@
-FROM node:current-bookworm
+FROM node:current-bookworm-slim
 
 ARG MDB_IP
 ARG MDB_USR
