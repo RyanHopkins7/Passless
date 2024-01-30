@@ -16,6 +16,4 @@ ENV MDB_IP $MDB_IP
 ENV MDB_USR $MDB_USR
 ENV MDB_PSW $MDB_PSW
 
-EXPOSE 3000
-
 CMD ["npm", "run", "start", "--", "--port", "3000"]
