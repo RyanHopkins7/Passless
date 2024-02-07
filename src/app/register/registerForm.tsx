@@ -31,8 +31,8 @@ export default function RegisterForm() {
     useEffect(() => {
         // Get word list
         fetch('/wordlist.txt')
-            .then(r => r.text())
-            .then(words => {
+            .then((r) => r.text())
+            .then((words) => {
                 setWordList(words.split('\n'));
             });
     }, []);
@@ -42,11 +42,11 @@ export default function RegisterForm() {
         if (wordList.length > 0 && passphrase.join('') === '') {
             // Fetch valid username
             fetch('/api/user', {
-                method: 'POST'
+                method: 'POST',
             })
-                .then(r => r.json())
-                .then(rJson => {
-                    setUsername(rJson.username)
+                .then((r) => r.json())
+                .then((rJson) => {
+                    setUsername(rJson.username);
                 });
 
             setPassphrase(genRandPassphrase(wordList));
@@ -59,23 +59,16 @@ export default function RegisterForm() {
         setLoading(true);
 
         const passString = passphrase.join('-');
-        if (
-            !passphrase.some((w) => w === '')
-            && username !== undefined
-        ) {
+        if (!passphrase.some((w) => w === '') && username !== undefined) {
             const keySalt = randomBytes(16);
             setPassphraseKeySalt(keySalt);
 
-            setPassphraseKeyData(
-                pbkdf2(sha256, passString, keySalt, pbkdf2Params)
-            );
+            setPassphraseKeyData(pbkdf2(sha256, passString, keySalt, pbkdf2Params));
 
             // Salting the passphrase hash with username
             // will allow us to calculate the passphrase hash
             // without the need to expose the salt via an API endpoint
-            setPassphraseHash(
-                pbkdf2(sha256, passString, username, pbkdf2Params)
-            );
+            setPassphraseHash(pbkdf2(sha256, passString, username, pbkdf2Params));
 
             setLoading(false);
         }
@@ -86,8 +79,8 @@ export default function RegisterForm() {
             <div className="w-xl my-10">
                 <h2 className="text-3xl font-bold mb-5">Generate Username and Passphrase</h2>
                 <p>
-                    You will need your username and passphrase to access your account.
-                    Please write them down and don&apos;t lose them.
+                    You will need your username and passphrase to access your account. Please write them down and
+                    don&apos;t lose them.
                 </p>
 
                 <h3 className="text-xl font-medium my-5">Generate Username</h3>
@@ -98,20 +91,22 @@ export default function RegisterForm() {
                     value={username}
                 ></input>
                 <div className="flex justify-center">
-                    <button className={loading ?
-                        "inline font-bold cursor-wait" :
-                        "inline font-bold cursor-pointer hover:underline"
-                    } onClick={() => {
-                        if (!loading) {
-                            fetch('/api/user', {
-                                method: 'POST'
-                            })
-                                .then(r => r.json())
-                                .then(rJson => {
-                                    setUsername(rJson.username)
-                                });
+                    <button
+                        className={
+                            loading ? 'inline font-bold cursor-wait' : 'inline font-bold cursor-pointer hover:underline'
                         }
-                    }}>
+                        onClick={() => {
+                            if (!loading) {
+                                fetch('/api/user', {
+                                    method: 'POST',
+                                })
+                                    .then((r) => r.json())
+                                    .then((rJson) => {
+                                        setUsername(rJson.username);
+                                    });
+                            }
+                        }}
+                    >
                         <img className="inline w-8 h-8 my-5" src="/reset.svg"></img>
                         Regenerate username
                     </button>
@@ -124,27 +119,32 @@ export default function RegisterForm() {
                             <div
                                 key={i}
                                 className="bg-light-purple w-30 h-12 px-4 py-3 rounded-md text-center font-bold"
-                            >{w}</div>
+                            >
+                                {w}
+                            </div>
                         );
                     })}
                 </div>
                 <div className="flex justify-center">
-                    <button className={loading ?
-                        "font-bold cursor-wait" :
-                        "font-bold cursor-pointer hover:underline"
-                    } onClick={() => {
-                        if (!loading) {
-                            setPassphrase(genRandPassphrase(wordList));
-                        }
-                    }}>
+                    <button
+                        className={loading ? 'font-bold cursor-wait' : 'font-bold cursor-pointer hover:underline'}
+                        onClick={() => {
+                            if (!loading) {
+                                setPassphrase(genRandPassphrase(wordList));
+                            }
+                        }}
+                    >
                         <img className="inline w-8 h-8 my-5" src="/reset.svg"></img>
                         Regenerate passphrase
                     </button>
                 </div>
                 <div className="flex justify-center">
-                    <button className={loading ?
-                        "block button bg-dark-purple m-3 px-6 py-2 w-96 rounded-3xl text-white font-bold cursor-wait" :
-                        "block button bg-dark-purple m-3 px-6 py-2 w-96 rounded-3xl text-white font-bold cursor-pointer"}
+                    <button
+                        className={
+                            loading
+                                ? 'block button bg-dark-purple m-3 px-6 py-2 w-96 rounded-3xl text-white font-bold cursor-wait'
+                                : 'block button bg-dark-purple m-3 px-6 py-2 w-96 rounded-3xl text-white font-bold cursor-pointer'
+                        }
                         onClick={async () => {
                             if (
                                 !loading &&
@@ -160,7 +160,7 @@ export default function RegisterForm() {
                                         length: 256,
                                     },
                                     true,
-                                    ['encrypt', 'decrypt'],
+                                    ['encrypt', 'decrypt']
                                 );
 
                                 const passphraseKey = await window.crypto.subtle.importKey(
@@ -168,7 +168,7 @@ export default function RegisterForm() {
                                     passphraseKeyData,
                                     {
                                         name: 'AES-KW',
-                                        length: 256
+                                        length: 256,
                                     },
                                     true,
                                     ['wrapKey', 'unwrapKey']
@@ -177,36 +177,31 @@ export default function RegisterForm() {
                                 // Wrap vault key with passphrase derived key
                                 // Send wrapped vault key and passphrase hash to the server
                                 const passWrappedVaultKey = new Uint8Array(
-                                    await window.crypto.subtle.wrapKey(
-                                        'raw',
-                                        vaultKey,
-                                        passphraseKey,
-                                        'AES-KW'
-                                    )
+                                    await window.crypto.subtle.wrapKey('raw', vaultKey, passphraseKey, 'AES-KW')
                                 );
 
                                 fetch('/api/user/passphrase', {
                                     method: 'POST',
                                     headers: {
-                                        'Content-Type': 'application/json'
+                                        'Content-Type': 'application/json',
                                     },
                                     body: JSON.stringify({
-                                        'passphraseWrappedVaultKey': bytesToHex(passWrappedVaultKey),
-                                        'passphraseKeySalt': bytesToHex(passphraseKeySalt),
-                                        'passphraseHash': bytesToHex(passphraseHash)
-                                    })
-                                })
-                                    .then(res => {
-                                        setLoading(false);
+                                        passphraseWrappedVaultKey: bytesToHex(passWrappedVaultKey),
+                                        passphraseKeySalt: bytesToHex(passphraseKeySalt),
+                                        passphraseHash: bytesToHex(passphraseHash),
+                                    }),
+                                }).then((res) => {
+                                    setLoading(false);
 
-                                        if (res.status === 201) {
-                                            window.location.replace('/login');
-                                        } else {
-                                            // TODO
-                                        }
-                                    });
+                                    if (res.status === 201) {
+                                        window.location.replace('/login');
+                                    } else {
+                                        // TODO
+                                    }
+                                });
                             }
-                        }}>
+                        }}
+                    >
                         I saved my username and passphrase
                     </button>
                 </div>
