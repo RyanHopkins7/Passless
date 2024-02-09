@@ -1,6 +1,6 @@
 # Passless
 
-Passless is an experimental demonstration of an encrypted file storage web application which uses a six-word passphrase for authenticaton and key derivation. At the moment, it only works with very small files. 
+Passless is an experimental demonstration of an encrypted file storage web application which uses a six-word passphrase for authenticaton and key derivation. At the moment, it only works with very small files. Absolutely no guarantees are made about availability of this application or any data which you might store on it!
 
 ## Run the development environment
 
