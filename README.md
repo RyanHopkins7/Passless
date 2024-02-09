@@ -1,6 +1,6 @@
 # Passless
 
-Passless is an experimental demonstration of a secure and end to end encrypted file sharing web application which doesn't use traditional passwords for authenticaton or key derivation.
+Passless is an experimental demonstration of an encrypted file storage web application which uses a six-word passphrase for authenticaton and key derivation. At the moment, it only works with very small files. 
 
 ## Run the development environment
 
@@ -57,7 +57,3 @@ When an authenticated user visits the vault page,
 1. The server will send the user their wrapped "vault key" which was wrapped with the "device key"
 2. The user will use their saved "device key" to unwrap the "vault key"
 3. The "vault key" can then be used to encrypt and decrypt files when sending and receiving file data to the server
-
-## Future plans
-
-In the future, I would like to use WebAuthn as a means to authenticate to the server before the server will send back the wrapped "vault key". Additionally, I'd like to allow the user to send their "vault key" to a new session using a password authenticated key agreement protocol. Finally, I'd like to allow publicly sharing encrypted files and uploading more than one file at a time.
